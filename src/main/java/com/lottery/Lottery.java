@@ -66,6 +66,12 @@ public class Lottery {
 
 	@SuppressWarnings("unchecked")
 	void start() {
+		try {
+			actuator.init();
+		} catch (Exception e) {
+			log.error("actuator init err", e);
+			return;
+		}
 		List<?> resources = null;
 		try {
 			resources = resource.load(path);

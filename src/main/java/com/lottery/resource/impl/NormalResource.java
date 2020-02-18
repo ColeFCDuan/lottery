@@ -18,7 +18,7 @@ import com.lottery.util.LoadResourceUtls;
  * @author: TGJ
  * @since: 1.0.0
  */
-public class NumberResource implements Resource<Long> {
+public class NormalResource implements Resource<Long> {
 
 	private static final String OS = System.getProperty("os.name").toLowerCase();
 
