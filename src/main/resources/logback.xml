@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!-- 级别从高到低 OFF 、 FATAL 、 ERROR 、 WARN 、 INFO 、 DEBUG 、 TRACE 、 ALL -->
+<!-- 日志输出规则 根据当前ROOT 级别，日志输出时，级别高于root默认的级别时 会输出 -->
+<!-- 以下 每个配置的 filter 是过滤掉输出文件里面，会出现高级别文件，依然出现低级别的日志信息，通过filter 过滤只记录本级别的日志 -->
+<!-- scan 当此属性设置为true时，配置文件如果发生改变，将会被重新加载，默认值为true。 -->
+<!-- scanPeriod 设置监测配置文件是否有修改的时间间隔，如果没有给出时间单位，默认单位是毫秒。当scan为true时，此属性生效。默认的时间间隔为1分钟。 -->
+<!-- debug 当此属性设置为true时，将打印出logback内部日志信息，实时查看logback运行状态。默认值为false。 -->
+<configuration scan="true" scanPeriod="60 seconds"
+	debug="false">
+
+	<!-- 动态日志级别 -->
+	<jmxConfigurator />
+
+	<!-- 定义日志文件 输出位置 -->
+	<property name="log.home_dir" value="d:/logs" />
+	<!-- 日志最大的历史 30天 -->
+	<property name="log.maxHistory" value="30" />
+	<property name="log.level" value="debug" />
+	<property name="log.maxSize" value="5MB" />
+
+	<!-- ConsoleAppender 控制台输出日志 -->
+	<appender name="CONSOLE"
+		class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>
+				<!-- 设置日志输出格式 -->
+				%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [%thread] %logger - %msg%n
+			</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="file"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<!--定义日志输出的路径 -->
+		<!--这里的scheduler.manager.server.home 没有在上面的配置中设定，所以会使用java启动时配置的值 -->
+		<!--比如通过 java -Dscheduler.manager.server.home=/path/to XXXX 配置该属性 -->
+		<file>${log.home_dir:-${log_tmp:-${java.io.tmpdir:-/tmp}}}.log</file>
+		<!--定义日志滚动的策略 -->
+		<rollingPolicy
+			class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!--定义文件滚动时的文件名的格式 -->
+			<fileNamePattern>${scheduler.manager.server.home}/logs/${app.name}.%d{yyyy-MM-dd.HH}.log.gz
+			</fileNamePattern>
+			<!--60天的时间周期，日志量最大20GB -->
+			<maxHistory>60</maxHistory>
+			<!-- 该属性在 1.1.6版本后 才开始支持 -->
+			<totalSizeCap>20GB</totalSizeCap>
+		</rollingPolicy>
+		<triggeringPolicy
+			class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<!--每个日志文件最大100MB -->
+			<maxFileSize>100MB</maxFileSize>
+		</triggeringPolicy>
+		<!--定义输出格式 -->
+		<encoder>
+			<pattern>%d [%thread] %-5level %logger{36} [%file : %line] - %msg%n
+			</pattern>
+		</encoder>
+	</appender>
+
+
+	<!-- root级别 DEBUG -->
+	<root>
+		<!-- 打印debug级别日志及以上级别日志 -->
+		<level value="${log.level}" />
+		<!-- 控制台输出 -->
+		<appender-ref ref="CONSOLE" />
+		<!-- <appender-ref ref="file" /> -->
+		<!-- 不管什么包下的日志都输出文件 -->
+		<!--<appender-ref ref="ERROR"/> -->
+		<!--<appender-ref ref="INFO"/> -->
+		<!--<appender-ref ref="WARN"/> -->
+		<!--<appender-ref ref="DEBUG"/> -->
+		<!--<appender-ref ref="TRACE"/> -->
+	</root>
+
+</configuration>
