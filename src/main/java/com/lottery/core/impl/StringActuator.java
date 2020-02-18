@@ -39,7 +39,7 @@ public class StringActuator implements Actuator<String> {
 		}
 		String tmp = number.getNumber();
 		String dist = sb.toString();
-		float socre = StringSimilarUtils.sorensenDice(resource, dist);
+		double socre = StringSimilarUtils.impossibleEnd(resource, dist, true);
 		results.put(new Result(socre, tmp));
 	}
 
@@ -55,14 +55,14 @@ public class StringActuator implements Actuator<String> {
 	}
 
 	static class Result {
-		float score;
+		double score;
 		String todayBuy;
 
-		public float getScore() {
+		public double getScore() {
 			return score;
 		}
 
-		public void setScore(float score) {
+		public void setScore(double score) {
 			this.score = score;
 		}
 
@@ -74,7 +74,7 @@ public class StringActuator implements Actuator<String> {
 			this.todayBuy = todayBuy;
 		}
 
-		public Result(float score, String todayBuy) {
+		public Result(double score, String todayBuy) {
 			this.score = score;
 			this.todayBuy = todayBuy;
 		}
