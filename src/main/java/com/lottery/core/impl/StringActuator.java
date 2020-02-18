@@ -1,5 +1,6 @@
 package com.lottery.core.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentMap;
@@ -16,15 +17,22 @@ public class StringActuator implements Actuator<String> {
 
 	private static final Logger log = LoggerFactory.getLogger(StringActuator.class);
 	private static PriorityBlockingQueue<Result> results;
-	private static int baseSize = 3;
+	private static PriorityBlockingQueue<Result> records;
+	private static int baseSize = 10;
+	private static volatile boolean needRemove = false;
 	private static final int BASE_LEN = 14;
 	private static volatile int times = -1;
 	private static volatile boolean calComplete = false;
+	private static List<Result> lists;
+	private static Object lock = new Object();
 
 	@Override
 	public void init(List<String> resources) throws Exception {
-		results = new PriorityBlockingQueue<>(resources.size(),
+		results = new PriorityBlockingQueue<>(baseSize * 2,
 				(t0, t1) -> t0.score == t1.score ? 0 : t0.score > t1.score ? -1 : 1);
+		records = new PriorityBlockingQueue<>(baseSize * 2,
+				(t0, t1) -> t0.score == t1.score ? 0 : t0.score > t1.score ? 1 : -1);
+		lists = new ArrayList<>(baseSize * 2);
 	}
 
 	@Override
@@ -40,7 +48,25 @@ public class StringActuator implements Actuator<String> {
 		String tmp = number.getNumber();
 		String dist = sb.toString();
 		double socre = StringSimilarUtils.impossibleEnd(resource, dist, false);
-		results.put(new Result(socre, tmp));
+		synchronized (lock) {
+			Result t = new Result(socre, tmp);
+			results.add(t);
+			records.add(t);
+			if (needRemove) {
+				results.remove(records.poll());
+			} else if (results.size() >= baseSize) {
+				needRemove = true;
+			}
+		}
+//		synchronized (lock) {
+//			lists.add(new Result(socre, tmp));
+//			if (needRemove) {
+//				lists.sort((t0, t1) -> t0.score == t1.score ? 0 : t0.score > t1.score ? -1 : 1);
+//				lists.remove(lists.size() - 1);
+//			} else if (lists.size() >= baseSize) {
+//				needRemove = true;
+//			}
+//		}
 	}
 
 	@Override
@@ -52,6 +78,9 @@ public class StringActuator implements Actuator<String> {
 		for (long i = 0; i < baseSize; i++) {
 			log.info("result: [{}]", results.poll());
 		}
+//		synchronized (lock) {
+//			log.info("result: [{}]", lists);
+//		}
 	}
 
 	static class Result {

@@ -81,27 +81,28 @@ public class Lottery {
 		}
 		ConcurrentMap<String, Object> context = new ConcurrentHashMap<>();
 		int size = resources.size();
-		CountDownLatch countDownLatch = new CountDownLatch(size);
+		CountDownLatch countDownLatch = new CountDownLatch(size * 100);
 		ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 		Queue<Exception> exceptions = new ConcurrentLinkedQueue<>();
 		try {
 			for (Object obj : resources) {
-				executorService.execute(() -> {
-					try {
-						actuator.execute(context, obj, number);
-						countDownLatch.countDown();
-					} catch (Exception e) {
-						executorService.shutdownNow();
-						exceptions.add(e);
-						log.error("actuator execute err", e);
-						long tmp = countDownLatch.getCount();
-						while (tmp-- > 0) {
+				for (int i = 0; i < 5000; i++) {
+					executorService.execute(() -> {
+						try {
+							actuator.execute(context, obj, number);
 							countDownLatch.countDown();
+						} catch (Exception e) {
+							executorService.shutdownNow();
+							exceptions.add(e);
+							log.error("actuator execute err", e);
+							long tmp = countDownLatch.getCount();
+							while (tmp-- > 0) {
+								countDownLatch.countDown();
+							}
 						}
-					}
-				});
+					});
+				}
 			}
-
 		} catch (Exception e) {
 			log.info("swallow it");
 		}

@@ -28,7 +28,7 @@ public class NormalActuator implements Actuator<Long> {
 			// 生成一组随机的数据
 			Long dist = number.getNumber();
 			if (dist.equals(resource)) {
-				results.add(count);
+				results.offer(count);
 				break;
 			}
 		}
