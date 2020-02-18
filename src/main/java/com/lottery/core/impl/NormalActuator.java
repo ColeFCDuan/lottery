@@ -15,7 +15,12 @@ import com.lottery.number.Number;
 public class NormalActuator implements Actuator<Long> {
 
 	private static final Logger log = LoggerFactory.getLogger(NormalActuator.class);
-	private static final Queue<Long> results = new ConcurrentLinkedQueue<>();
+	private static Queue<Long> results;
+
+	@Override
+	public void init(List<Long> resources) throws Exception {
+		results = new ConcurrentLinkedQueue<>();
+	}
 
 	@Override
 	public void execute(ConcurrentMap<String, Object> context, Long resource, Number number) throws Exception {
