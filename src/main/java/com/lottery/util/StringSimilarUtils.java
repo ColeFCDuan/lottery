@@ -48,7 +48,7 @@ public class StringSimilarUtils {
 		}
 		double count = 0;
 		int size = a.length();
-		for (int i = 0, j = 1; j < size; i++, j++) {
+		for (int i = 0, j = 1; j < size; i += 2, j += 2) {
 			if (a.charAt(i) != b.charAt(i) || a.charAt(j) != b.charAt(j)) {
 				if (ifFalseBreak) {
 					break;

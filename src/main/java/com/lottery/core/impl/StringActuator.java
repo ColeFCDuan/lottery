@@ -39,7 +39,7 @@ public class StringActuator implements Actuator<String> {
 		}
 		String tmp = number.getNumber();
 		String dist = sb.toString();
-		double socre = StringSimilarUtils.impossibleEnd(resource, dist, true);
+		double socre = StringSimilarUtils.impossibleEnd(resource, dist, false);
 		results.put(new Result(socre, tmp));
 	}
 
