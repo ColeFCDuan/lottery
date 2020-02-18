@@ -1,6 +1,5 @@
 package com.lottery.util;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,15 +8,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.SetUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.lottery.util.LoadResourceUtls;
 
 public class StringSimilarUtils {
 
-	private StringSimilarUtils() {};
-	
+	private StringSimilarUtils() {
+	}
+
 	/**
 	 * 编程之美 计算字符串的相似度 我们定义一套操作方法来把两个不相同的字符串变得相同，具体的操作方法为： 1.修改一个字符（如把“a”替换为“b”）;
 	 * 2.增加一个字符（如把“abdd”变为“aebdd”）; 3.删除一个字符（如把“travelling”变为“traveling”）;
@@ -35,29 +31,7 @@ public class StringSimilarUtils {
 	 * A1="bc",B2="zbc" -->按位比较得到的L=1+3 A2="abc",B2="bc" -->按位比较得到的L=1+3
 	 * 因此程序会选择第一种操作，再接着进行第K+1位的比较
 	 */
-	private final static Logger log = LoggerFactory.getLogger(StringSimilarUtils.class);
-	private final static String PATH = "/ssq_result.txt";
 	private static int[][] record; // 记录子问题的解，0表示子问题未求解
-
-	public static void main(String[] args) throws IOException {
-		List<String> list = LoadResourceUtls.translateToList(LoadResourceUtls.loadResources(PATH),
-				t -> t.split("\\s")[3]);
-		list = LoadResourceUtls.translateToList(list, ",|\\\\", "");
-		String dest = LoadResourceUtls.translateToString(list, null);
-		System.out.println(dest.length());
-		String[] strBB = { dest };
-		for (String strB : strBB) {
-			log.debug(String.valueOf(jaccard(dest, strB)));
-//			log.debug(String.valueOf(sorensenDice(dest, strB)));
-//			log.debug(String.valueOf(levenshtein(dest, strB)));
-//			log.debug(String.valueOf(hamming(dest, strB)));
-//			log.debug(String.valueOf(cos(dest, strB)));
-//			// 超级慢
-//			int distance = distanceBetween(dest, strB);
-//			int distance = minDistance(dest, strB);
-//			log.debug(String.valueOf(1.0 / (distance + 1)));
-		}
-	}
 
 	public static float cos(String a, String b) {
 		if (a == null || b == null) {

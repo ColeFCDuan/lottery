@@ -1,4 +1,4 @@
-package com.lottery.util;
+package com.lottery.number.impl;
 
 import java.util.Iterator;
 import java.util.Objects;
@@ -7,17 +7,16 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class NumberUtils {
+import com.lottery.number.Number;
 
-	private NumberUtils() {
-	}
+public class StringNumber implements Number {
 
 	private static Random RANDOM = new Random();
 	private static int RED_NUM = 33;
 	private static int BLUE_NUM = 16;
 	private static int NEED_RED_NUM = 6;
 
-	private static String getNumber0(Random random) {
+	private String getNumber0(Random random) {
 		Set<Integer> records = new TreeSet<>();
 		int num = NEED_RED_NUM;
 		while (records.size() != num) {
@@ -35,17 +34,15 @@ public class NumberUtils {
 		return sb.toString();
 	}
 
-	public static String getNumber() {
-		return getNumber0(RANDOM);
-	}
-
-	public static String getNumber(Random random) {
+	@SuppressWarnings("unchecked")
+	public String getNumber(Random random) {
 		if (Objects.isNull(random))
 			random = RANDOM;
 		return getNumber0(random);
 	}
 
-	public static String getSafeNumber() {
+	@SuppressWarnings("unchecked")
+	public String getNumber() {
 		ThreadLocalRandom random = ThreadLocalRandom.current();
 		return getNumber0(random);
 	}
