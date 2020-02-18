@@ -49,9 +49,9 @@ public class NormalActuator implements Actuator<Long> {
 		// 取出平均数加前后三次的数据，作为今日数据
 		List<Long> todayBuyList = new ArrayList<>();
 		for (long generatePer = 0; generatePer < averageNum; generatePer++) {
-			// 生成今日数据
-			Long todayBuy = number.getNumber();
 			if (averageNum - generatePer == 1) {
+				// 生成今日数据
+				Long todayBuy = number.getNumber();
 				todayBuyList.add(todayBuy);
 			}
 

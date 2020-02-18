@@ -27,7 +27,7 @@ public class StringNumber implements LotteryNum {
 		int tmp = 0;
 		for (; iterator.hasNext(); num--) {
 			tmp = iterator.next();
-			sb.append(tmp < 10 ? "0" : "").append(tmp).append(num == 1 ? "\\" : ",");
+			sb.append(tmp < 10 ? "0" : "").append(tmp);//.append(num == 1 ? "\\" : ",");
 		}
 		int blue = random.nextInt(BLUE_NUM) + 1;
 		sb.append(blue < 10 ? "0" : "").append(blue);
