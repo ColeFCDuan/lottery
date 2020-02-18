@@ -18,7 +18,7 @@ public class LoadResourceUtls {
 	private LoadResourceUtls() {
 	}
 
-	public static List<String> loadResourcees(String path) throws IOException {
+	public static List<String> loadResources(String path) throws IOException {
 		if (Objects.isNull(path))
 			throw new NullPointerException("path is null");
 		path = LoadResourceUtls.class.getResource(path).getPath();

@@ -38,7 +38,7 @@ public class PredictionByStringSimilar {
 	private static int[][] record; // 记录子问题的解，0表示子问题未求解
 
 	public static void main(String[] args) throws IOException {
-		List<String> list = LoadResourceUtls.translateToList(LoadResourceUtls.loadResourcees(PATH),
+		List<String> list = LoadResourceUtls.translateToList(LoadResourceUtls.loadResources(PATH),
 				t -> t.split("\\s")[3]);
 		list = LoadResourceUtls.translateToList(list, ",|\\\\", "");
 		String dest = LoadResourceUtls.translateToString(list, null);
