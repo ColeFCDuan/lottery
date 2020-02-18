@@ -15,7 +15,7 @@ public class StringResource implements Resource<String> {
 		list = LoadResourceUtls.translateToList(list, ",|\\\\", "");
 		int size = list.size();
 		String str = LoadResourceUtls.translateToString(list, null);
-		List<String> results = new ArrayList<String>(size);
+		List<String> results = new ArrayList<>(size);
 		for (int i = 0; i < size; i++) {
 			results.add(str);
 		}
