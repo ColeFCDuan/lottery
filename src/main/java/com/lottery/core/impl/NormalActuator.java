@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.lottery.core.Actuator;
-import com.lottery.number.Number;
+import com.lottery.number.LotteryNum;
 
 public class NormalActuator implements Actuator<Long> {
 
@@ -23,7 +23,7 @@ public class NormalActuator implements Actuator<Long> {
 	}
 
 	@Override
-	public void execute(ConcurrentMap<String, Object> context, Long resource, Number number) throws Exception {
+	public void execute(ConcurrentMap<String, Object> context, Long resource, LotteryNum number) throws Exception {
 		for (long count = 0;; count++) {
 			// 生成一组随机的数据
 			Long dist = number.getNumber();
@@ -35,7 +35,7 @@ public class NormalActuator implements Actuator<Long> {
 	}
 
 	@Override
-	public void predicate(ConcurrentMap<String, Object> context, Number number, Queue<Exception> exceptions)
+	public void predicate(ConcurrentMap<String, Object> context, LotteryNum number, Queue<Exception> exceptions)
 			throws Exception {
 		if (!exceptions.isEmpty()) {
 			log.error("can't predicate result because of exists exception");

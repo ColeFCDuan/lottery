@@ -7,9 +7,9 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ThreadLocalRandom;
 
-import com.lottery.number.Number;
+import com.lottery.number.LotteryNum;
 
-public class NormalNumber implements Number {
+public class NormalNumber implements LotteryNum {
 
 	private static Random RANDOM = new Random();
 	private static int RED_NUM = 33;

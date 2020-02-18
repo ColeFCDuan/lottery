@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import com.lottery.number.Number;
+import com.lottery.number.LotteryNum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +24,7 @@ public class Lottery {
 
 	private Resource resource;
 
-	private Number number;
+	private LotteryNum number;
 
 	private Actuator actuator;
 
@@ -46,11 +46,11 @@ public class Lottery {
 		return this;
 	}
 
-	public Number getNumber() {
+	public LotteryNum getNumber() {
 		return number;
 	}
 
-	public Lottery setNumber(Number number) {
+	public Lottery setNumber(LotteryNum number) {
 		this.number = number;
 		return this;
 	}

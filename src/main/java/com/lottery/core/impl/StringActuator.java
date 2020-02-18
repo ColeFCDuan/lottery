@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.lottery.core.Actuator;
-import com.lottery.number.Number;
+import com.lottery.number.LotteryNum;
 import com.lottery.util.StringSimilarUtils;
 
 public class StringActuator implements Actuator<String> {
@@ -28,7 +28,7 @@ public class StringActuator implements Actuator<String> {
 	}
 
 	@Override
-	public void execute(ConcurrentMap<String, Object> context, String resource, Number number) throws Exception {
+	public void execute(ConcurrentMap<String, Object> context, String resource, LotteryNum number) throws Exception {
 		if (!calComplete) {
 			times = resource.length() / BASE_LEN;
 			calComplete = true;
@@ -44,7 +44,7 @@ public class StringActuator implements Actuator<String> {
 	}
 
 	@Override
-	public void predicate(ConcurrentMap<String, Object> context, Number number, Queue<Exception> exceptions)
+	public void predicate(ConcurrentMap<String, Object> context, LotteryNum number, Queue<Exception> exceptions)
 			throws Exception {
 		if (!exceptions.isEmpty()) {
 			log.error("can't predicate result because of exists exception");
