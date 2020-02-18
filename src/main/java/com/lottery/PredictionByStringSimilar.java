@@ -46,7 +46,7 @@ public class PredictionByStringSimilar {
 		String[] strBB = { dest };
 		for (String strB : strBB) {
 			log.debug(String.valueOf(jaccard(dest, strB)));
-//			log.debug(String.valueOf(SorensenDice(dest, strB)));
+//			log.debug(String.valueOf(sorensenDice(dest, strB)));
 //			log.debug(String.valueOf(levenshtein(dest, strB)));
 //			log.debug(String.valueOf(hamming(dest, strB)));
 //			log.debug(String.valueOf(cos(dest, strB)));
@@ -56,71 +56,71 @@ public class PredictionByStringSimilar {
 //			log.debug(String.valueOf(1.0 / (distance + 1)));
 		}
 	}
-	
+
 	public static float cos(String a, String b) {
-        if (a == null || b == null) {
-            return 0F;
-        }
-        Set<Integer> aChar = a.chars().boxed().collect(Collectors.toSet());
-        Set<Integer> bChar = b.chars().boxed().collect(Collectors.toSet());
+		if (a == null || b == null) {
+			return 0F;
+		}
+		Set<Integer> aChar = a.chars().boxed().collect(Collectors.toSet());
+		Set<Integer> bChar = b.chars().boxed().collect(Collectors.toSet());
 
-        // 统计字频
-        Map<Integer, Integer> aMap = new HashMap<>();
-        Map<Integer, Integer> bMap = new HashMap<>();
-        for (Integer a1 : aChar) {
-            aMap.put(a1, aMap.getOrDefault(a1, 0) + 1);
-        }
-        for (Integer b1 : bChar) {
-            bMap.put(b1, bMap.getOrDefault(b1, 0) + 1);
-        }
+		// 统计字频
+		Map<Integer, Integer> aMap = new HashMap<>();
+		Map<Integer, Integer> bMap = new HashMap<>();
+		for (Integer a1 : aChar) {
+			aMap.put(a1, aMap.getOrDefault(a1, 0) + 1);
+		}
+		for (Integer b1 : bChar) {
+			bMap.put(b1, bMap.getOrDefault(b1, 0) + 1);
+		}
 
-        // 向量化
-        Set<Integer> union = SetUtils.union(aChar, bChar);
-        int[] aVec = new int[union.size()];
-        int[] bVec = new int[union.size()];
-        List<Integer> collect = new ArrayList<>(union);
-        for (int i = 0; i < collect.size(); i++) {
-            aVec[i] = aMap.getOrDefault(collect.get(i), 0);
-            bVec[i] = bMap.getOrDefault(collect.get(i), 0);
-        }
+		// 向量化
+		Set<Integer> union = SetUtils.union(aChar, bChar);
+		int[] aVec = new int[union.size()];
+		int[] bVec = new int[union.size()];
+		List<Integer> collect = new ArrayList<>(union);
+		for (int i = 0; i < collect.size(); i++) {
+			aVec[i] = aMap.getOrDefault(collect.get(i), 0);
+			bVec[i] = bMap.getOrDefault(collect.get(i), 0);
+		}
 
-        // 分别计算三个参数
-        int p1 = 0;
-        for (int i = 0; i < aVec.length; i++) {
-            p1 += (aVec[i] * bVec[i]);
-        }
+		// 分别计算三个参数
+		int p1 = 0;
+		for (int i = 0; i < aVec.length; i++) {
+			p1 += (aVec[i] * bVec[i]);
+		}
 
-        float p2 = 0f;
-        for (int i : aVec) {
-            p2 += (i * i);
-        }
-        p2 = (float) Math.sqrt(p2);
+		float p2 = 0f;
+		for (int i : aVec) {
+			p2 += (i * i);
+		}
+		p2 = (float) Math.sqrt(p2);
 
-        float p3 = 0f;
-        for (int i : bVec) {
-            p3 += (i * i);
-        }
-        p3 = (float) Math.sqrt(p3);
+		float p3 = 0f;
+		for (int i : bVec) {
+			p3 += (i * i);
+		}
+		p3 = (float) Math.sqrt(p3);
 
-        return ((float) p1) / (p2 * p3);
-    }
-	
+		return ((float) p1) / (p2 * p3);
+	}
+
 	public static float hamming(String a, String b) {
-        if (a == null || b == null) {
-            return 0f;
-        }
-        if (a.length() != b.length()) {
-            return 0f;
-        }
+		if (a == null || b == null) {
+			return 0f;
+		}
+		if (a.length() != b.length()) {
+			return 0f;
+		}
 
-        int disCount = 0;
-        for (int i = 0; i < a.length(); i++) {
-            if (a.charAt(i) != b.charAt(i)) {
-                disCount++;
-            }
-        }
-        return (float) disCount / (float) a.length();
-    }
+		int disCount = 0;
+		for (int i = 0; i < a.length(); i++) {
+			if (a.charAt(i) != b.charAt(i)) {
+				disCount++;
+			}
+		}
+		return (float) disCount / (float) a.length();
+	}
 
 	public static float levenshtein(String a, String b) {
 		if (a == null && b == null) {
@@ -160,7 +160,7 @@ public class PredictionByStringSimilar {
 		return v[aLen][bLen];
 	}
 
-	public static float SorensenDice(String a, String b) {
+	public static float sorensenDice(String a, String b) {
 		if (a == null && b == null) {
 			return 1f;
 		}
@@ -199,34 +199,6 @@ public class PredictionByStringSimilar {
 		return ((float) intersection) / (float) union;
 	}
 
-	public static int minDistance(String word1, String word2) {
-		if (word1.length() == 0 || word2.length() == 0)
-			return word1.length() == 0 ? word2.length() : word1.length();
-		int[][] arr = new int[word1.length() + 1][word2.length() + 1];
-		for (int i = 0; i <= word1.length(); i++) {
-			arr[i][0] = i;
-		}
-		for (int j = 0; j <= word2.length(); j++) {
-			arr[0][j] = j;
-		}
-		for (int i = 0; i < word1.length(); i++) {
-			for (int j = 0; j < word2.length(); j++) {
-				if (word1.charAt(i) == word2.charAt(j)) {
-					arr[j + 1][i + 1] = arr[j][i];
-				} else {
-					int replace = arr[i][j] + 1;
-					int insert = arr[i][j + 1] + 1;
-					int delete = arr[i + 1][j] + 1;
-
-					int min = replace > insert ? insert : replace;
-					min = delete > min ? min : delete;
-					arr[i + 1][j + 1] = min;
-				}
-			}
-		}
-		return arr[word1.length()][word2.length()];
-	}
-
 	public static int distanceBetween(String strA, String strB) {
 		int distance = -1;
 		if (strA != null && strB != null) {
@@ -261,11 +233,7 @@ public class PredictionByStringSimilar {
 			}
 		}
 		if (beginB > endB) {
-			if (beginA > endA) {
-				return 0;
-			} else {
-				return endA - beginA + 1;
-			}
+			return endA - beginA + 1;
 		}
 
 		int distance = -1;
