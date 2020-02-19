@@ -15,11 +15,14 @@ import com.lottery.number.LotteryNum;
 public class NormalActuator implements Actuator<Long> {
 
 	private static final Logger log = LoggerFactory.getLogger(NormalActuator.class);
-	private static Queue<Long> results;
+	private Queue<Long> results;
+	private List<Long> resources;
+	private int index = 0;
 
 	@Override
 	public void init(List<Long> resources) throws Exception {
 		results = new ConcurrentLinkedQueue<>();
+		this.resources = resources;
 	}
 
 	@Override
@@ -57,6 +60,11 @@ public class NormalActuator implements Actuator<Long> {
 
 		}
 		log.info("result: [{}]", todayBuyList);
+	}
+
+	@Override
+	public Long judge() throws Exception {
+		return resources.size() > index ? resources.get(index++) : null;
 	}
 
 }

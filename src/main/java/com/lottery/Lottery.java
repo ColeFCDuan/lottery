@@ -1,18 +1,20 @@
 package com.lottery;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import com.lottery.number.LotteryNum;
+import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.lottery.core.Actuator;
+import com.lottery.number.LotteryNum;
 import com.lottery.resource.Resource;
 
 @SuppressWarnings("rawtypes")
@@ -80,34 +82,34 @@ public class Lottery {
 			return;
 		}
 		ConcurrentMap<String, Object> context = new ConcurrentHashMap<>();
-		int size = resources.size();
-		CountDownLatch countDownLatch = new CountDownLatch(size * 100);
 		ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 		Queue<Exception> exceptions = new ConcurrentLinkedQueue<>();
 		try {
-			for (Object obj : resources) {
-				for (int i = 0; i < 5000; i++) {
-					executorService.execute(() -> {
-						try {
-							actuator.execute(context, obj, number);
-							countDownLatch.countDown();
-						} catch (Exception e) {
-							executorService.shutdownNow();
-							exceptions.add(e);
-							log.error("actuator execute err", e);
-							long tmp = countDownLatch.getCount();
-							while (tmp-- > 0) {
-								countDownLatch.countDown();
-							}
-						}
-					});
-				}
+			Object obj = null;
+			while (Objects.nonNull(obj) && !exceptions.isEmpty() || Objects.nonNull(obj = actuator.judge())) {
+				Object tmp = obj;
+				executorService.execute(() -> {
+					try {
+						actuator.execute(context, tmp, number);
+					} catch (Exception e) {
+						executorService.shutdownNow();
+						exceptions.add(e);
+						log.error("actuator execute err", e);
+					}
+				});
 			}
+			executorService.shutdown();
 		} catch (Exception e) {
-			log.info("swallow it");
+			log.info("actuator judge err", e);
+		}
+		while (!executorService.isTerminated()) {
+			try {
+				TimeUnit.SECONDS.sleep(1);
+			} catch (Exception e) {
+				// swallow it
+			}
 		}
 		try {
-			countDownLatch.await();
 			actuator.predicate(context, number, exceptions);
 		} catch (Exception e) {
 			log.error("actuator predicate err", e);

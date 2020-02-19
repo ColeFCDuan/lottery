@@ -1,6 +1,5 @@
 package com.lottery.resource.impl;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.lottery.resource.Resource;
@@ -13,12 +12,6 @@ public class StringResource implements Resource<String> {
 		List<String> list = LoadResourceUtls.translateToList(LoadResourceUtls.loadResources(path),
 				t -> t.split("\\s")[3]);
 		list = LoadResourceUtls.translateToList(list, ",|\\\\", "");
-		int size = list.size();
-		String str = LoadResourceUtls.translateToString(list, null);
-		List<String> results = new ArrayList<>(size);
-		for (int i = 0; i < size; i++) {
-			results.add(str);
-		}
-		return results;
+		return List.of(LoadResourceUtls.translateToString(list, null));
 	}
 }

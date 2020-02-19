@@ -1,7 +1,8 @@
 package com.lottery.core.impl;
 
-import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.PriorityBlockingQueue;
@@ -16,40 +17,62 @@ import com.lottery.util.StringSimilarUtils;
 public class StringActuator implements Actuator<String> {
 
 	private static final Logger log = LoggerFactory.getLogger(StringActuator.class);
-	private static PriorityBlockingQueue<Result> results;
-	private static PriorityBlockingQueue<Result> records;
-	private static int baseSize = 10;
-	private static volatile boolean needRemove = false;
 	private static final int BASE_LEN = 14;
-	private static volatile int times = -1;
-	private static volatile boolean calComplete = false;
-	private static List<Result> lists;
-	private static Object lock = new Object();
+	private PriorityBlockingQueue<Result> results;
+	private PriorityBlockingQueue<Result> records;
+	private int baseSize = 10;
+	private volatile boolean needRemove = false;
+	private int repeatTimes = -1;
+	private Object lock = new Object();
+	private long times;
+	private Date endDate;
+	private double score = 0;
+	private volatile boolean scoreOk = false;
+	private List<String> resources;
+
+	public StringActuator(Date endDate) {
+		super();
+		this.endDate = endDate;
+	}
+
+	public StringActuator(double score) {
+		super();
+		this.score = score;
+	}
+
+	public StringActuator(long times) {
+		super();
+		this.times = times;
+	}
 
 	@Override
 	public void init(List<String> resources) throws Exception {
+		if (Objects.nonNull(resources) && !resources.isEmpty()) {
+			repeatTimes = resources.get(0).length() / BASE_LEN;
+			this.resources = resources;
+		} else {
+			throw new IllegalArgumentException("resources is empty");
+		}
+		if (times == 0 && Objects.isNull(endDate) && score == 0) {
+			times = 5000;
+		}
 		results = new PriorityBlockingQueue<>(baseSize * 2,
 				(t0, t1) -> t0.score == t1.score ? 0 : t0.score > t1.score ? -1 : 1);
 		records = new PriorityBlockingQueue<>(baseSize * 2,
 				(t0, t1) -> t0.score == t1.score ? 0 : t0.score > t1.score ? 1 : -1);
-		lists = new ArrayList<>(baseSize * 2);
 	}
 
 	@Override
 	public void execute(ConcurrentMap<String, Object> context, String resource, LotteryNum number) throws Exception {
-		if (!calComplete) {
-			times = resource.length() / BASE_LEN;
-			calComplete = true;
-		}
 		StringBuilder sb = new StringBuilder();
-		for (int tmp = times; tmp > 0; tmp--) {
+		for (int tmp = repeatTimes; tmp > 0; tmp--) {
 			sb.append(number.getNumber().toString());
 		}
 		String tmp = number.getNumber();
 		String dist = sb.toString();
-		double socre = StringSimilarUtils.impossibleEnd(resource, dist, false);
+		double score = StringSimilarUtils.impossibleEnd(resource, dist, false);
 		synchronized (lock) {
-			Result t = new Result(socre, tmp);
+			Result t = new Result(score, tmp);
 			results.add(t);
 			records.add(t);
 			if (needRemove) {
@@ -58,15 +81,9 @@ public class StringActuator implements Actuator<String> {
 				needRemove = true;
 			}
 		}
-//		synchronized (lock) {
-//			lists.add(new Result(socre, tmp));
-//			if (needRemove) {
-//				lists.sort((t0, t1) -> t0.score == t1.score ? 0 : t0.score > t1.score ? -1 : 1);
-//				lists.remove(lists.size() - 1);
-//			} else if (lists.size() >= baseSize) {
-//				needRemove = true;
-//			}
-//		}
+		if (this.score != 0 && this.score >= score) {
+			scoreOk = true;
+		}
 	}
 
 	@Override
@@ -78,9 +95,6 @@ public class StringActuator implements Actuator<String> {
 		for (long i = 0; i < baseSize; i++) {
 			log.info("result: [{}]", results.poll());
 		}
-//		synchronized (lock) {
-//			log.info("result: [{}]", lists);
-//		}
 	}
 
 	static class Result {
@@ -112,6 +126,17 @@ public class StringActuator implements Actuator<String> {
 		public String toString() {
 			return "Result [score=" + score + ", todayBuy=" + todayBuy + "]";
 		}
+	}
+
+	@Override
+	public String judge() throws Exception {
+		if (scoreOk) {
+			return null;
+		}
+		if (score != 0 || Objects.nonNull(endDate) && endDate.after(new Date()) || times-- > 0) {
+			return resources.get(0);
+		}
+		return null;
 	}
 
 }

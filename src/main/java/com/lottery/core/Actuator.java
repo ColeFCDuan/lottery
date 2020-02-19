@@ -10,8 +10,11 @@ public interface Actuator<T> {
 	default void init(List<T> resources) throws Exception {
 	}
 
+	T judge() throws Exception;
+
 	void execute(ConcurrentMap<String, Object> context, T resource, LotteryNum number) throws Exception;
 
-	void predicate(ConcurrentMap<String, Object> context, LotteryNum number, Queue<Exception> exceptions) throws Exception;
+	void predicate(ConcurrentMap<String, Object> context, LotteryNum number, Queue<Exception> exceptions)
+			throws Exception;
 
 }
