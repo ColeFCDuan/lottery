@@ -25,12 +25,31 @@ public class Lottery {
 	private static final Logger log = LoggerFactory.getLogger(Lottery.class);
 
 	private String path;
-
 	private Resource resource;
-
 	private LotteryNum number;
-
 	private Actuator actuator;
+
+	private ExecutorService executorService = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(),
+			Runtime.getRuntime().availableProcessors(), 0, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(1 << 16),
+			(r, executor) -> {
+				try {
+					if (!executor.isShutdown()) {
+						executor.getQueue().put(r);
+					}
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					throw new RejectedExecutionException(
+							"Executor was interrupted while the task was waiting to put on work queue", e);
+				}
+			});
+
+	public ExecutorService getExecutorService() {
+		return executorService;
+	}
+
+	public void setExecutorService(ExecutorService executorService) {
+		this.executorService = executorService;
+	}
 
 	public String getPath() {
 		return path;
@@ -70,6 +89,9 @@ public class Lottery {
 
 	@SuppressWarnings("unchecked")
 	void start() {
+		if (Objects.isNull(resource) || Objects.isNull(actuator) || Objects.isNull(number) || Objects.isNull(path)) {
+			throw new IllegalArgumentException("resource or actuator or number or path is empty");
+		}
 		List<?> resources = null;
 		try {
 			resources = resource.load(path);
@@ -84,20 +106,6 @@ public class Lottery {
 			return;
 		}
 		ConcurrentMap<String, Object> context = new ConcurrentHashMap<>();
-		int availableProcessors = Runtime.getRuntime().availableProcessors();
-		ExecutorService executorService = new ThreadPoolExecutor(availableProcessors,
-				Runtime.getRuntime().availableProcessors(), 0, TimeUnit.SECONDS,
-				new ArrayBlockingQueue<Runnable>(1 << 16), (r, executor) -> {
-					try {
-						if (!executor.isShutdown()) {
-							executor.getQueue().put(r);
-						}
-					} catch (InterruptedException e) {
-						Thread.currentThread().interrupt();
-						throw new RejectedExecutionException(
-								"Executor was interrupted while the task was waiting to put on work queue", e);
-					}
-				});
 		Queue<Exception> exceptions = new ConcurrentLinkedQueue<>();
 		try {
 			Object obj = null;
