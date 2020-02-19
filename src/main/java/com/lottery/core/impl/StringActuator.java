@@ -74,9 +74,9 @@ public class StringActuator implements Actuator<String> {
 		}
 		String tmp = number.getNumber();
 		String dist = sb.toString();
-		double score = StringSimilarUtils.impossibleEnd(resource, dist, false);
+		double tmpScore = StringSimilarUtils.impossibleEnd(resource, dist, false);
 		synchronized (lock) {
-			Result t = new Result(score, tmp);
+			Result t = new Result(tmpScore, tmp);
 			results.add(t);
 			records.add(t);
 			if (needRemove) {
@@ -85,7 +85,7 @@ public class StringActuator implements Actuator<String> {
 				needRemove = true;
 			}
 		}
-		if (this.score != 0 && this.score >= score) {
+		if (this.score != 0 && this.score >= tmpScore) {
 			scoreOk = true;
 		}
 	}
