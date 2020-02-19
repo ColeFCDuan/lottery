@@ -3,11 +3,13 @@ package com.lottery;
 import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -82,7 +84,20 @@ public class Lottery {
 			return;
 		}
 		ConcurrentMap<String, Object> context = new ConcurrentHashMap<>();
-		ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		int availableProcessors = Runtime.getRuntime().availableProcessors();
+		ExecutorService executorService = new ThreadPoolExecutor(availableProcessors,
+				Runtime.getRuntime().availableProcessors(), 0, TimeUnit.SECONDS,
+				new ArrayBlockingQueue<Runnable>(1 << 16), (r, executor) -> {
+					try {
+						if (!executor.isShutdown()) {
+							executor.getQueue().put(r);
+						}
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+						throw new RejectedExecutionException(
+								"Executor was interrupted while the task was waiting to put on work queue", e);
+					}
+				});
 		Queue<Exception> exceptions = new ConcurrentLinkedQueue<>();
 		try {
 			Object obj = null;
