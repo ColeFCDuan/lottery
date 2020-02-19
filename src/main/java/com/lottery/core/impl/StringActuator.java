@@ -30,6 +30,10 @@ public class StringActuator implements Actuator<String> {
 	private volatile boolean scoreOk = false;
 	private List<String> resources;
 
+	public StringActuator() {
+		super();
+	}
+
 	public StringActuator(Date endDate) {
 		super();
 		this.endDate = endDate;
