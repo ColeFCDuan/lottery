@@ -50,10 +50,13 @@ public class ShareTests {
 	@Test
 	public void sortTest() throws IOException {
 		List<JsonObject> dest = Files
-				.readAllLines(Paths.get(ShareTests.class.getResource("shareSuccess.txt").getPath()),
+				.readAllLines(Paths.get(ShareTests.class.getResource("shareSuccess.txt").getPath().substring(1)),
 						StandardCharsets.UTF_8)
-				.stream().map(t -> JsonParser.parseString(t).getAsJsonObject())
-				.filter(t -> !t.getAsJsonObject("result").get("scoresAll").isJsonNull()).sorted((t1, t2) -> {
+				.stream().map(t -> JsonParser.parseString(t).getAsJsonObject()).filter(t -> {
+					JsonObject jsonObject = t.getAsJsonObject("result");
+					boolean none = !jsonObject.get("scoresAll").isJsonNull();
+					return none && jsonObject.get("lastPrice").getAsFloat() < 15;
+				}).sorted((t1, t2) -> {
 					JsonObject jsonObject = t1.getAsJsonObject("result");
 					JsonElement jsonElement = jsonObject.get("scoresAll");
 					float t1Score = jsonElement.getAsFloat();
@@ -63,7 +66,7 @@ public class ShareTests {
 					float t2Score = jsonElement.getAsFloat();
 					return t1Score == t2Score ? 0 : t1Score > t2Score ? -1 : 1;
 				}).collect(Collectors.toList());
-		dest.stream().limit(10).map(t -> {
+		dest.stream().limit(10).collect(Collectors.toList()).stream().map(t -> {
 			JsonObject jsonObject = t.getAsJsonObject("result");
 			jsonObject.remove("sentiment");
 			jsonObject.remove("stockIndex");
@@ -73,11 +76,11 @@ public class ShareTests {
 			jsonObject.remove("category");
 			jsonObject.remove("klineData");
 			return t;
-		}).collect(Collectors.groupingBy(t -> t.getAsJsonObject("result").get("scoresAll").getAsFloat()))
+		}).collect(Collectors.groupingBy(t -> t.getAsJsonObject("result").get("stockCode").getAsString()))
 				.forEach((k, v) -> {
 					System.out.println("score: " + k + " -------> " + v);
 				});
-		Files.writeString(Paths.get(ShareTests.class.getResource("").getPath(), "result.txt"),
+		Files.writeString(Paths.get(ShareTests.class.getResource("").getPath().substring(1), "result.txt"),
 				dest.stream().map(t -> t.toString()).collect(Collectors.joining("\r\n")), StandardCharsets.UTF_8,
 				StandardOpenOption.CREATE);
 	}
