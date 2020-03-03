@@ -63,8 +63,17 @@ public class ShareTests {
 					float t2Score = jsonElement.getAsFloat();
 					return t1Score == t2Score ? 0 : t1Score > t2Score ? -1 : 1;
 				}).collect(Collectors.toList());
-		dest.stream().limit(10).map(t -> )
-				.collect(Collectors.groupingBy(t -> t.getAsJsonObject("result").get("scoresAll").getAsFloat()))
+		dest.stream().limit(10).map(t -> {
+			JsonObject jsonObject = t.getAsJsonObject("result");
+			jsonObject.remove("sentiment");
+			jsonObject.remove("stockIndex");
+			jsonObject.remove("shIndex");
+			jsonObject.remove("baseAnalysis");
+			jsonObject.remove("blacklist");
+			jsonObject.remove("category");
+			jsonObject.remove("klineData");
+			return t;
+		}).collect(Collectors.groupingBy(t -> t.getAsJsonObject("result").get("scoresAll").getAsFloat()))
 				.forEach((k, v) -> {
 					System.out.println("score: " + k + " -------> " + v);
 				});
