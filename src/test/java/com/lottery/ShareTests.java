@@ -46,7 +46,7 @@ public class ShareTests {
 				StandardCharsets.UTF_8, StandardOpenOption.CREATE);
 	}
 
-//	@Ignore
+	@Ignore
 	@Test
 	public void sortTest() throws IOException {
 		List<JsonObject> dest = Files
