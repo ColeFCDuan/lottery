@@ -10,12 +10,17 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.junit.Ignore;
@@ -26,6 +31,28 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 public class ShareTests {
+
+	@Test
+	public void myShareTest() throws IOException, InterruptedException {
+		String url = "http://hq.sinajs.cn/list=sh600678,sh600068,sh600989";
+		DecimalFormat format = new DecimalFormat("0.00");
+		SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
+		while (true) {
+			HttpResponse<String> httpResponse;
+			httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url)).build(),
+					HttpResponse.BodyHandlers.ofString());
+			String str = httpResponse.body();
+			String[] result = str.split("\n");
+			System.out.println(simpleDateFormat.format(new Date()));
+			for (int i = 0; i < result.length; i++) {
+				String[] tmp = result[i].split(",");
+				System.out.println(tmp[0].split("\"")[1] + "\t" + tmp[0].split("=\"")[0].split("_")[2] + "\t" + tmp[3]
+						+ "\t" + format.format((Float.valueOf(tmp[3]) / Float.valueOf(tmp[2]) - 1) * 100) + "%\t"
+						+ (int) Math.floor(Float.valueOf(tmp[10]) / 100) + "\t" + tmp[11]);
+			}
+			TimeUnit.MILLISECONDS.sleep(1992);
+		}
+	}
 
 	@Ignore
 	@Test
@@ -103,6 +130,7 @@ public class ShareTests {
 				StandardCharsets.UTF_8, StandardOpenOption.CREATE);
 	}
 
+	@Ignore
 	@Test
 	public void allShareTest() throws IOException, InterruptedException {
 //		String url = "http://api.money.126.net/data/feed/0600389,money.api?callback=test";
