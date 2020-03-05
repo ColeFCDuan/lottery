@@ -12,7 +12,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +21,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -32,9 +32,10 @@ import com.google.gson.JsonParser;
 
 public class ShareTests {
 
+//	@Ignore
 	@Test
 	public void myShareTest() throws IOException, InterruptedException {
-		String url = "http://hq.sinajs.cn/list=sh600678,sh600068,sh600989";
+		String url = "http://hq.sinajs.cn/list=sh000001,sh600678,sh600068,sh600989";
 		DecimalFormat format = new DecimalFormat("0.00");
 		SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
 		while (true) {
@@ -44,7 +45,8 @@ public class ShareTests {
 			String str = httpResponse.body();
 			String[] result = str.split("\n");
 			System.out.println(simpleDateFormat.format(new Date()));
-			for (int i = 0; i < result.length; i++) {
+			System.out.println(Stream.of(result[0].split(",")).collect(Collectors.joining("\t")));
+			for (int i = 1; i < result.length; i++) {
 				String[] tmp = result[i].split(",");
 				System.out.println(tmp[0].split("\"")[1] + "\t" + tmp[0].split("=\"")[0].split("_")[2] + "\t" + tmp[3]
 						+ "\t" + format.format((Float.valueOf(tmp[3]) / Float.valueOf(tmp[2]) - 1) * 100) + "%\t"
