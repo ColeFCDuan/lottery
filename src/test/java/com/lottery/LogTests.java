@@ -9,10 +9,9 @@ public class LogTests {
 
 	@Test
 	public void logTest() {
-		log.trace("test trace");
-		log.debug("test debug");
-		log.info("test info");
-		log.warn("test warn");
-		log.error("test error");
+		double a = Double.NEGATIVE_INFINITY;
+		if (a + 1 == a) {
+		    System.out.println("ok");
+		}
 	}
 }
