@@ -321,6 +321,16 @@ public class ShareTests {
         System.out.println(jsonArray);
     }
 
+    @Test
+    public void biddingPrice() {
+        // PhoneOSNew=2&StockID=300576&Token=b1c0216d069ff3c40e17ef97ee38dbf3&UserID=778861&a=GetStockBid&apiv=w21&c=StockL2Data
+    }
+
+    @Test
+    public void tradeDetail() {
+        // PhoneOSNew=2&StockID=300576&Time=&a=GetStockVolTurIncremental&apiv=w21&c=StockL2Data
+    }
+
     @Ignore
     @Test
     public void allShareTest() throws IOException, InterruptedException {
