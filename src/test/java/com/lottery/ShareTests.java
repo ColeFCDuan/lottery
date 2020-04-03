@@ -42,7 +42,7 @@ public class ShareTests {
         String url = "http://hq.sinajs.cn/list=sh600678";
         url = "https://hq.kaipanla.com/w1/api/index.php";
         int index = 4339;
-        int size = 100000;
+        int size = 10;
         while (true) {
             HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
                     .header("Content-Type", "application/x-www-form-urlencoded")
@@ -61,15 +61,16 @@ public class ShareTests {
                         asJsonArray.get(3).getAsInt(), asJsonArray.get(5).getAsInt() == 1,
                         asJsonArray.get(7).getAsInt()));
             });
-            List<Trade> collect = list.parallelStream().filter(t -> t.total > 1000000).collect(Collectors.toList());
-            System.out.println("超过100万每单总笔数：" + collect.size());
-            Map<Boolean, List<Trade>> map = collect.parallelStream().collect(Collectors.groupingBy(t -> t.buy));
-            System.out.println("超过100万每单买入总笔数：" + map.get(true).size());
-            System.out.println("超过100万每单卖出总笔数：" + map.get(false).size());
-            System.out.println("超过100万每单买入总金额："
-                    + map.get(true).parallelStream().map(t -> t.total).collect(Collectors.summarizingInt(t -> t)));
-            System.out.println("超过100万每单卖出总金额："
-                    + map.get(false).parallelStream().map(t -> t.total).collect(Collectors.summarizingInt(t -> t)));
+            list.forEach(System.out::println);
+//            List<Trade> collect = list.parallelStream().filter(t -> t.total > 1000000).collect(Collectors.toList());
+//            System.out.println("超过100万每单总笔数：" + collect.size());
+//            Map<Boolean, List<Trade>> map = collect.parallelStream().collect(Collectors.groupingBy(t -> t.buy));
+//            System.out.println("超过100万每单买入总笔数：" + map.get(true).size());
+//            System.out.println("超过100万每单卖出总笔数：" + map.get(false).size());
+//            System.out.println("超过100万每单买入总金额："
+//                    + map.get(true).parallelStream().map(t -> t.total).collect(Collectors.summarizingInt(t -> t)));
+//            System.out.println("超过100万每单卖出总金额："
+//                    + map.get(false).parallelStream().map(t -> t.total).collect(Collectors.summarizingInt(t -> t)));
             TimeUnit.SECONDS.sleep(1);
         }
 
@@ -151,7 +152,7 @@ public class ShareTests {
     public void myShareTest() throws IOException, InterruptedException {
         String url = "http://hq.sinajs.cn/list=sh600678,sh600068"
                 + ",sh600989,sz300051,sz002277,sh603366,sz000716,sz300002,sh600853,sz002310,sz002154,sz002505,sz002305,sh600159";
-        url = "http://hq.sinajs.cn/list=sz002506,sh601398,sz000725,sh600089,sz000420,sz002405,sz000100,sh000001,sh601857,sh600028";
+        url = "http://hq.sinajs.cn/list=sh601398,sz000725,sh600089,sz000100,sh000001,sz002426";
         DecimalFormat format = new DecimalFormat("0.00");
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
         while (true) {
@@ -260,8 +261,8 @@ public class ShareTests {
     }
 
     @Test
-    public void getStaringPlate() throws IOException, InterruptedException {
-        int size = 2000;
+    public void getStartingPlate() throws IOException, InterruptedException {
+        int size = 10;
         int index = 0;
         String url = "https://hq.kaipanla.com/w1/api/index.php";
         HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(
@@ -275,13 +276,13 @@ public class ShareTests {
                 .getAsJsonArray();
         // {"time":1585810617,"status":"封涨大减","stock_name":"国脉科技","plate_type":1,"status_color":1,"zf":"","content":"涨停封单大幅减少1055万元，剩余封单5510万元","stockid":"002093"}
         // 时间, 状态，名称，板块类型，是涨还是跌，未知，内容，id
-        System.out.println(jsonArray.get(0));
+        jsonArray.forEach(System.out::println);
     }
 
     @Test
     public void getAllPlate() throws IOException, InterruptedException {
         String url = "https://hq.kaipanla.com/w1/api/index.php";
-        int size = 2000;
+        int size = 10;
         int index = 0;
         HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(
                 HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "application/x-www-form-urlencoded")
@@ -327,8 +328,20 @@ public class ShareTests {
     }
 
     @Test
-    public void tradeDetail() {
+    public void tradeDetail() throws IOException, InterruptedException {
         // PhoneOSNew=2&StockID=300576&Time=&a=GetStockVolTurIncremental&apiv=w21&c=StockL2Data
+        String url = "https://hq.kaipanla.com/w1/api/index.php";
+        String id = "002426";
+        HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(
+                HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "application/x-www-form-urlencoded")
+                        .POST(BodyPublishers.ofString(
+                                "PhoneOSNew=2&StockID=" + id
+                                        + "&Time=&a=GetStockVolTurIncremental&apiv=w21&c=StockL2Data",
+                                StandardCharsets.UTF_8))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        System.out.println(httpResponse.body());
+        JsonObject jsonObject = JsonParser.parseString(httpResponse.body()).getAsJsonObject();
     }
 
     @Ignore
@@ -456,6 +469,11 @@ class Trade {
         this.num = num;
         this.buy = buy;
         this.total = total;
+    }
+
+    @Override
+    public String toString() {
+        return "Trade [time=" + time + ", price=" + price + ", num=" + num + ", buy=" + buy + ", total=" + total + "]";
     }
 
 }
