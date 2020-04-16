@@ -14,17 +14,23 @@ import java.nio.file.StandardOpenOption;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -42,7 +48,7 @@ public class ShareTests {
         String url = "http://hq.sinajs.cn/list=sh600678";
         url = "https://hq.kaipanla.com/w1/api/index.php";
         int index = 4339;
-        int size = 10;
+        int size = 100;
         while (true) {
             HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
                     .header("Content-Type", "application/x-www-form-urlencoded")
@@ -84,6 +90,51 @@ public class ShareTests {
 //            total += System.currentTimeMillis() - e;
 //        }
 //        System.out.println(total);
+    }
+
+//  @Ignore
+    @Test
+    public void findGoodNew() throws IOException, InterruptedException {
+        long s = 345600;
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String path = ShareTests.class.getResource("shareDesByOk.txt").getPath();
+//      path = path.substring(1);
+        List<String> collect = Files.readAllLines(Paths.get(path), StandardCharsets.UTF_8).stream()
+                .map(t -> t.split("\t")[2]).collect(Collectors.toList());
+        List<String[]> list = new ArrayList<>();
+        int i = 0;
+        for (String stockId : collect) {
+            try {
+                String url = "https://m.0033.com/listv4/hs/" + stockId + "_1.json";
+                HttpResponse<String> httpResponse = HttpClient.newHttpClient()
+                        .send(HttpRequest.newBuilder(URI.create(url)).build(), HttpResponse.BodyHandlers.ofString());
+                JsonArray jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("data")
+                        .getAsJsonObject().get("pageItems").getAsJsonArray();
+                for (JsonElement element : jsonArray) {
+                    JsonObject jsonObject = element.getAsJsonObject();
+                    long asLong = jsonObject.get("ctime").getAsLong();
+                    Date l = new Date((asLong + s) * 1000);
+                    if (l.after(new Date())) {
+                        if ("利好".equals(jsonObject.get("label_property").getAsString())) {
+                            System.out.println();
+                            String[] tmp = new String[] { stockId, simpleDateFormat.format(new Date(asLong * 1000)),
+                                    jsonObject.get("source").getAsString(), jsonObject.get("title").getAsString(),
+                                    jsonObject.get("url").getAsString() };
+                            list.add(tmp);
+                        }
+                    } else {
+                        break;
+                    }
+                }
+                i++;
+            } catch (Exception e) {
+                System.out.println(i + "----------");
+            }
+
+        }
+        list.forEach(t -> System.out.println(Arrays.toString(t)));
+        List<String> list2 = list.stream().map(t -> t[0]).collect(Collectors.toList());
+        System.out.println(list2);
     }
 
     @Test
@@ -152,7 +203,7 @@ public class ShareTests {
     public void myShareTest() throws IOException, InterruptedException {
         String url = "http://hq.sinajs.cn/list=sh600678,sh600068"
                 + ",sh600989,sz300051,sz002277,sh603366,sz000716,sz300002,sh600853,sz002310,sz002154,sz002505,sz002305,sh600159";
-        url = "http://hq.sinajs.cn/list=sh601398,sz000725,sh600089,sz000100,sh000001,sz002426";
+        url = "http://hq.sinajs.cn/list=sz002185,sz000908,sz000955,sz002581";
         DecimalFormat format = new DecimalFormat("0.00");
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
         while (true) {
@@ -280,9 +331,30 @@ public class ShareTests {
     }
 
     @Test
+    public void getTopPlate() throws IOException, InterruptedException {
+        String url = "https://hq.kaipanla.com/w1/api/index.php";
+        int size = 3;
+        int index = 0;
+        while (true) {
+            HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .POST(BodyPublishers.ofString("Index=" + index
+                            + "&Order=1&PhoneOSNew=2&Type=1&ZSType=7&a=RealRankingInfo&apiv=w21&c=ZhiShuRanking&st="
+                            + size, StandardCharsets.UTF_8))
+                    .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            JsonArray jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("list")
+                    .getAsJsonArray();
+            jsonArray.forEach(System.out::println);
+            System.out.println("---------------------");
+            Thread.sleep(3000);
+        }
+
+    }
+
+    @Test
     public void getAllPlate() throws IOException, InterruptedException {
         String url = "https://hq.kaipanla.com/w1/api/index.php";
-        int size = 10;
+        int size = 4000;
         int index = 0;
         HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(
                 HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "application/x-www-form-urlencoded")
@@ -297,51 +369,182 @@ public class ShareTests {
         // id, 名称, 强度, 涨幅, 涨速, 成交，主力净额，主力买，主力卖，量比，流通值
         LinkedList<String> ids = new LinkedList<>();
         jsonArray.forEach(t -> ids.add(t.getAsJsonArray().get(0).getAsString()));
-        String id = "300576";
-        httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .POST(BodyPublishers.ofString("Index=" + index + "&Order=1&PhoneOSNew=2&PlateID=" + id
-                        + "&Token=b1c0216d069ff3c40e17ef97ee38dbf3&Type=6&UserID=778861&a=ZhiShuStockList_W8&apiv=w21&c=ZhiShuRanking&old=1&st="
-                        + size, StandardCharsets.UTF_8))
-                .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-        jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("list").getAsJsonArray();
-        // ["300576","\u5bb9\u5927\u611f\u5149","\u6e38\u8d44",0,"\u5149\u523b\u80f6\u3001\u5927\u57fa\u91d1\u4e8c\u671f",40.48,10,612149442,27.23,0,2389977656,92028225,-27485909,64542316,
-        // 15.03,4.49,10.54,3.85,1.15,2.7,9.26,1.0561,0,"3\u59292\u677f","\u9f99\u4e00",27.23,"",0,33586256,142434944,"",""]
-        // id, 名称, 是否游资, 未知，板块，价格, 涨幅，成交额，实际换手，涨速，实际流通，主力买，主力卖，主力净额，
-        // 未知，未知，未知，未知，未知，净流占比，区间涨幅，量比，未知，板数，龙几，实际换手，未知，未知，收盘封单，最大封单
-        httpResponse = HttpClient.newHttpClient().send(
-                HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "application/x-www-form-urlencoded")
-                        .POST(BodyPublishers.ofString(
-                                "PhoneOSNew=2&StockID=" + id + "&a=GetZhangTingGene&apiv=w21&c=StockL2Data",
-                                StandardCharsets.UTF_8))
-                        .build(),
-                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-        jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("List").getAsJsonArray();
-        // [18,8,81.8182,80,20,23.0769]
-        // 涨停次数，溢价5%次数，次日红盘率，首板封板率，首板破板率，连板率
-        System.out.println(jsonArray);
+        List<String[]> records = new ArrayList<>();
+        for (String stockId : ids) {
+            String id = stockId;
+            httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .POST(BodyPublishers.ofString("Index=" + index + "&Order=1&PhoneOSNew=2&PlateID=" + id
+                            + "&Token=b1c0216d069ff3c40e17ef97ee38dbf3&Type=6&UserID=778861&a=ZhiShuStockList_W8&apiv=w21&c=ZhiShuRanking&old=1&st="
+                            + size, StandardCharsets.UTF_8))
+                    .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("list").getAsJsonArray();
+            // ["300576","\u5bb9\u5927\u611f\u5149","\u6e38\u8d44",0,"\u5149\u523b\u80f6\u3001\u5927\u57fa\u91d1\u4e8c\u671f",40.48,10,612149442,27.23,0,2389977656,92028225,-27485909,64542316,
+            // 15.03,4.49,10.54,3.85,1.15,2.7,9.26,1.0561,0,"3\u59292\u677f","\u9f99\u4e00",27.23,"",0,33586256,142434944,"",""]
+            // id, 名称, 是否游资, 未知，板块，价格, 涨幅，成交额，实际换手，涨速，实际流通，主力买，主力卖，主力净额，
+            // 未知，未知，未知，未知，未知，净流占比，区间涨幅，量比，未知，板数，龙几，实际换手，未知，未知，收盘封单，最大封单
+            jsonArray.forEach(t -> {
+                JsonArray j = t.getAsJsonArray();
+                String[] tmp = new String[] { j.get(0).getAsString(), j.get(1).getAsString(), j.get(2).getAsString(),
+                        j.get(3).getAsString(), j.get(4).getAsString(), j.get(5).getAsString(), j.get(6).getAsString(),
+                        j.get(7).getAsString(), j.get(8).getAsString(), j.get(9).getAsString(), j.get(10).getAsString(),
+                        j.get(11).getAsString(), j.get(12).getAsString(), j.get(13).getAsString() };
+                records.add(tmp);
+            });
+        }
+
+        List<String[]> collect = records.stream().filter(t -> {
+            if (Double.valueOf(t[5]) < 90 && Double.valueOf(t[6]) < 1 && Double.valueOf(t[8]) > 4
+                    && Double.valueOf(t[13]) > 0) {
+                return true;
+            }
+            return false;
+        }).collect(Collectors.toList());
+        Set<String> stockIds = new HashSet<>();
+        for (String[] stockId : collect) {
+            String id = stockId[0];
+            httpResponse = HttpClient.newHttpClient().send(
+                    HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "application/x-www-form-urlencoded")
+                            .POST(BodyPublishers.ofString(
+                                    "PhoneOSNew=2&StockID=" + id + "&a=GetZhangTingGene&apiv=w21&c=StockL2Data",
+                                    StandardCharsets.UTF_8))
+                            .build(),
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("List").getAsJsonArray();
+            // [18,8,81.8182,80,20,23.0769]
+            // 涨停次数，溢价5%次数，次日红盘率，首板封板率，首板破板率，连板率
+            if (jsonArray.get(0).getAsInt() >= 5) {
+                stockIds.add(id);
+                System.out.println(Arrays.toString(stockId));
+            }
+        }
+        System.out.println(stockIds);
+
     }
 
     @Test
-    public void biddingPrice() {
+    public void getSelfShare() throws IOException, InterruptedException {
+        String url = "https://hq.kaipanla.com/w1/api/index.php";
+        int size = 4000;
+        int index = 0;
+        String date = "2020-04-15";
+        HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(BodyPublishers.ofString("Date=" + date
+                        + "&Filter=0&Order=1&PhoneOSNew=2&Ratio=6&Type=6&a=RealRankingInfo_W8&apiv=w21&c=NewStockRanking&index="
+                        + index + "&st=" + size, StandardCharsets.UTF_8))
+                .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        JsonArray jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("list")
+                .getAsJsonArray();
+        // ["002076","雪莱特","",0,"病毒防治、环保",2.7,10.2,83533938,5.33,0,1611541032,42995098,0,42995098,51.47,0,51.47,2.67,0,2.67,11.11,1.12803,0,"首板","",5.33,"",0,0,0,"","",""]
+        // id, 名称, 是否游资, 未知，板块，价格, 涨幅，成交额，实际换手，涨速，实际流通，主力买，主力卖，主力净额，
+        // 未知，未知，未知，未知，未知，净流占比，区间涨幅，量比，未知，板数，龙几，实际换手，未知，未知，收盘封单，最大封单
+        List<String> stocks = new ArrayList<String>(200);
+        System.out.println(jsonArray.size());
+        for (int i = 0; i < 200; i++) {
+            System.out.println(jsonArray.get(i).getAsJsonArray().get(6));
+            stocks.add(jsonArray.get(i).getAsJsonArray().get(0).getAsString());
+        }
+        System.out.println(stocks);
+    }
+
+//    class Share {
+//        String id;
+//        String name;
+//        boolean main;
+//        String plate;
+//        double price;
+//        double sup;
+//        double tprice;
+//        double exchange;
+//    }
+
+    @Test
+    public void biddingPrice() throws IOException, InterruptedException {
         // PhoneOSNew=2&StockID=300576&Token=b1c0216d069ff3c40e17ef97ee38dbf3&UserID=778861&a=GetStockBid&apiv=w21&c=StockL2Data
+        List<String> collect = Stream.of(
+                "603095, 002980, 300325, 002426, 000766, 300158, 300368, 002437, 002349, 600829, 300147, 002826, 603963, 600107, 600396, 000955, 002928, 300534, 603330, 300385, 002581, 002041, 002198, 002824, 002979, 300202, 000919, 603489, 603387, 300026, 300463, 002249, 300471, 002644, 600225, 300049, 002847, 300827, 300658, 002030, 603109, 600511, 603032, 300551, 002603, 300465, 002866, 600268, 300039, 300334, 000767, 002400, 600527, 300639, 002750, 300332, 300194, 002882, 300722, 002456, 603920, 601179, 002317, 603059, 300676, 300485, 300628, 603158, 600267, 600186, 603313, 002585, 002850, 600222, 603709, 600836, 600732, 600371, 688012, 603258, 600200, 300314, 300755, 002693, 002709, 300133, 300813, 600513, 002563, 002859, 002938, 600855, 002560, 002873, 002653, 603979, 600933, 688051, 002185, 000710, 002166, 002758, 002668, 300598, 000822, 688111, 002639, 603501, 600218, 002970, 002967, 002785, 000982, 002065, 300417, 603676, 600321, 688298, 002086, 600283, 603127, 601689, 600228, 603601, 300259, 603345, 300782, 600767, 600526, 000596, 600488, 002333, 002749, 600789, 600080, 002501, 000806, 603990, 002480, 002864, 000760, 002445, 000650, 002050, 002330, 002027, 603129, 002160, 002566, 688068, 603309, 300066, 300386, 600594, 002411, 002925, 600351, 002398, 300416, 002878, 002973, 000957, 300349, 300298, 002022, 002459, 300644, 600557, 300255, 002556, 300371, 300204, 002129, 600613, 300600, 603583, 300393, 603987, 002176, 600696, 300492, 603579, 603986, 002165, 300086, 002002, 000718, 002886, 603686, 000859, 000518, 002594, 002583, 300636, 603926, 002487, 600409, 002072, 600645, 603712"
+                        .split(",\\s"))
+                .collect(Collectors.toList());
+        List<JsonArray> lists = new LinkedList<JsonArray>();
+        for (String id : collect) {
+            String url = "https://hq.kaipanla.com/w1/api/index.php";
+            HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .POST(BodyPublishers.ofString("PhoneOSNew=2&StockID=" + id
+                            + "&Token=1c90c577bbf1c9abd83f4ff1295f37b8&UserID=778861&a=GetStockBid&apiv=w21&c=StockL2Data",
+                            StandardCharsets.UTF_8))
+                    .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            JsonObject jsonObject = JsonParser.parseString(httpResponse.body()).getAsJsonObject();
+            System.out.println(jsonObject);
+            JsonElement jsonElement = jsonObject.get("preclose_px");
+            if (null == jsonElement) {
+                continue;
+            }
+            String preclose = jsonObject.get("preclose_px").getAsString();
+            JsonArray asJsonArray = jsonObject.get("bid").getAsJsonArray();
+            if (asJsonArray.size() == 0) {
+                continue;
+            }
+            JsonArray jsonArray = asJsonArray.get(asJsonArray.size() - 1).getAsJsonArray();
+            jsonArray.add(id);
+            jsonArray.add(preclose);
+            lists.add(jsonArray);
+        }
+        Collections.sort(lists, new Comparator<JsonArray>() {
+            @Override
+            public int compare(JsonArray o1, JsonArray o2) {
+                if (o1.get(3).getAsInt() == o2.get(3).getAsInt()) {
+                    return 0;
+                }
+                return o1.get(3).getAsInt() > o2.get(3).getAsInt() ? -1 : 1;
+            }
+        });
+        List<JsonArray> collect2 = lists.stream().filter(t -> {
+            float f = (t.get(3).getAsFloat() - t.get(5).getAsFloat()) / t.get(5).getAsFloat();
+            t.add(f);
+            return Math.abs(f) < 3;
+        }).collect(Collectors.toList());
+        collect2.stream().limit(100).forEach(System.out::println);
+    }
+
+    @Test
+    public void tiger() throws IOException, InterruptedException {
+        // DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index=0&PhoneOSNew=2&Time=2020-04-02&Token=b1c0216d069ff3c40e17ef97ee38dbf3&Type=1&UserID=778861&a=GetStockList&apiv=w21&c=LongHuBang&st=300
+        String url = "https://lhb.kaipanla.com/w1/api/index.php";
+        String date = "2020-04-03";
+        int index = 0;
+        int size = 2;
+        HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(BodyPublishers.ofString(
+                        "DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index=0&PhoneOSNew=2&Time=1990-01-09&Token=b1c0216d069ff3c40e17ef97ee38dbf3&Type=1&UserID=778861&a=GetStockList&apiv=w21&c=LongHuBang&st=300",
+                        StandardCharsets.UTF_8))
+                .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        System.out.println(Objects.isNull(httpResponse.body()));
+//        JsonObject jsonObject = JsonParser.parseString(httpResponse.body()).getAsJsonObject();
+//        System.out.println(jsonObject);
     }
 
     @Test
     public void tradeDetail() throws IOException, InterruptedException {
-        // PhoneOSNew=2&StockID=300576&Time=&a=GetStockVolTurIncremental&apiv=w21&c=StockL2Data
+        // DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index=4200&PhoneOSNew=3193&StockID=002426&Type=2&UserID=778861&a=GetStockFenBi2&apiv=w21&c=StockL2Data&st=10
         String url = "https://hq.kaipanla.com/w1/api/index.php";
         String id = "002426";
-        HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(
-                HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "application/x-www-form-urlencoded")
-                        .POST(BodyPublishers.ofString(
-                                "PhoneOSNew=2&StockID=" + id
-                                        + "&Time=&a=GetStockVolTurIncremental&apiv=w21&c=StockL2Data",
-                                StandardCharsets.UTF_8))
-                        .build(),
-                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-        System.out.println(httpResponse.body());
+        int index = 3905;
+        int size = 10;
+        HttpResponse<String> httpResponse = HttpClient
+                .newHttpClient().send(
+                        HttpRequest.newBuilder(URI.create(url))
+                                .header("Content-Type", "application/x-www-form-urlencoded")
+                                .POST(BodyPublishers.ofString("DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index="
+                                        + index + "&PhoneOSNew=3193&StockID=" + id
+                                        + "&Type=2&UserID=778861&a=GetStockFenBi2&apiv=w21&c=StockL2Data&st=" + size,
+                                        StandardCharsets.UTF_8))
+                                .build(),
+                        HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         JsonObject jsonObject = JsonParser.parseString(httpResponse.body()).getAsJsonObject();
+        System.out.println(jsonObject);
     }
 
     @Ignore
