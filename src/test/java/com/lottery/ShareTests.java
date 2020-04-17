@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,6 +33,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -197,13 +201,21 @@ public class ShareTests {
             TimeUnit.MILLISECONDS.sleep(500);
         }
     }
+    
+    @Test
+    public void shareTest() throws IOException, InterruptedException {
+        String url = "http://hq.sinajs.cn/list=sz002075";
+        HttpResponse<String> httpResponse = HttpClient.newHttpClient()
+                .send(HttpRequest.newBuilder(URI.create(url)).build(), HttpResponse.BodyHandlers.ofString());
+        System.out.println(httpResponse.body().split(",").length);
+    }
 
 //    @Ignore
     @Test
     public void myShareTest() throws IOException, InterruptedException {
         String url = "http://hq.sinajs.cn/list=sh600678,sh600068"
                 + ",sh600989,sz300051,sz002277,sh603366,sz000716,sz300002,sh600853,sz002310,sz002154,sz002505,sz002305,sh600159";
-        url = "http://hq.sinajs.cn/list=sz002185,sz000908,sz000955,sz002581";
+        url = "http://hq.sinajs.cn/list=sz002075,sz000908,sz000955,sz002581";
         DecimalFormat format = new DecimalFormat("0.00");
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
         while (true) {
@@ -509,19 +521,22 @@ public class ShareTests {
     }
 
     @Test
-    public void tiger() throws IOException, InterruptedException {
+    public void tiger() throws IOException, InterruptedException, ParseException {
         // DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index=0&PhoneOSNew=2&Time=2020-04-02&Token=b1c0216d069ff3c40e17ef97ee38dbf3&Type=1&UserID=778861&a=GetStockList&apiv=w21&c=LongHuBang&st=300
         String url = "https://lhb.kaipanla.com/w1/api/index.php";
-        String date = "2020-04-03";
         int index = 0;
         int size = 2;
+        String date = "2015-09-24";
         HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
                 .header("Content-Type", "application/x-www-form-urlencoded")
-                .POST(BodyPublishers.ofString(
-                        "DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index=0&PhoneOSNew=2&Time=1990-01-09&Token=b1c0216d069ff3c40e17ef97ee38dbf3&Type=1&UserID=778861&a=GetStockList&apiv=w21&c=LongHuBang&st=300",
-                        StandardCharsets.UTF_8))
+                .POST(BodyPublishers.ofString("DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index=" + index
+                        + "&PhoneOSNew=2&Time=" + date
+                        + "&Token=b1c0216d069ff3c40e17ef97ee38dbf3&Type=1&UserID=778861&a=GetStockList&apiv=w21&c=LongHuBang&st="
+                        + size, StandardCharsets.UTF_8))
                 .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-        System.out.println(Objects.isNull(httpResponse.body()));
+        if (StringUtils.isNoneBlank(httpResponse.body())) {
+            System.out.println(httpResponse.body());
+        }
 //        JsonObject jsonObject = JsonParser.parseString(httpResponse.body()).getAsJsonObject();
 //        System.out.println(jsonObject);
     }
