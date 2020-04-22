@@ -24,18 +24,14 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.DateFormatUtils;
-import org.apache.commons.lang3.time.DateUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -48,41 +44,45 @@ public class ShareTests {
 
 //    @Ignore
     @Test
-    public void speendTest() throws IOException, InterruptedException {
-        String url = "http://hq.sinajs.cn/list=sh600678";
+    public void speendTest() throws IOException, InterruptedException {// 1643082 //11467725 //4913317
+        String url = "http://hq.sinajs.cn/list=sz000908";
         url = "https://hq.kaipanla.com/w1/api/index.php";
-        int index = 4339;
-        int size = 100;
-        while (true) {
-            HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .POST(BodyPublishers.ofString("DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index=" + index
-                            + "&PhoneOSNew=3193&StockID=600267&Type=2&UserID=778861&a=GetStockFenBi2&apiv=w21&c=StockL2Data&st="
-                            + size, StandardCharsets.UTF_8))
-                    .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            JsonObject jsonObject = JsonParser.parseString(httpResponse.body()).getAsJsonObject();
-            JsonArray data = jsonObject.getAsJsonArray("fb");
-            index = jsonObject.get("Count").getAsInt();
-            System.out.println(index);
-            List<Trade> list = new ArrayList<>(data.size() << 1);
-            jsonObject.getAsJsonArray("fb").forEach(t -> {
-                JsonArray asJsonArray = t.getAsJsonArray();
-                list.add(new Trade(asJsonArray.get(0).getAsString(), asJsonArray.get(1).getAsFloat(),
-                        asJsonArray.get(3).getAsInt(), asJsonArray.get(5).getAsInt() == 1,
-                        asJsonArray.get(7).getAsInt()));
-            });
-            list.forEach(System.out::println);
-//            List<Trade> collect = list.parallelStream().filter(t -> t.total > 1000000).collect(Collectors.toList());
-//            System.out.println("超过100万每单总笔数：" + collect.size());
-//            Map<Boolean, List<Trade>> map = collect.parallelStream().collect(Collectors.groupingBy(t -> t.buy));
-//            System.out.println("超过100万每单买入总笔数：" + map.get(true).size());
-//            System.out.println("超过100万每单卖出总笔数：" + map.get(false).size());
-//            System.out.println("超过100万每单买入总金额："
-//                    + map.get(true).parallelStream().map(t -> t.total).collect(Collectors.summarizingInt(t -> t)));
-//            System.out.println("超过100万每单卖出总金额："
-//                    + map.get(false).parallelStream().map(t -> t.total).collect(Collectors.summarizingInt(t -> t)));
-            TimeUnit.SECONDS.sleep(1);
-        }
+        int index = 5000;
+        int size = 6000;
+        String stockId = "002581";
+//        while (true) {
+        HttpResponse<String> httpResponse = HttpClient
+                .newHttpClient().send(
+                        HttpRequest.newBuilder(URI.create(url))
+                                .header("Content-Type", "application/x-www-form-urlencoded")
+                                .POST(BodyPublishers.ofString("DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index="
+                                        + index + "&PhoneOSNew=3193&StockID=" + stockId
+                                        + "&Type=2&UserID=778861&a=GetStockFenBi2&apiv=w21&c=StockL2Data&st=" + size,
+                                        StandardCharsets.UTF_8))
+                                .build(),
+                        HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        JsonObject jsonObject = JsonParser.parseString(httpResponse.body()).getAsJsonObject();
+        System.out.println(httpResponse.body());
+        JsonArray data = jsonObject.getAsJsonArray("fb");
+        index = jsonObject.get("Count").getAsInt();
+        System.out.println(index);
+        List<Trade> list = new ArrayList<>(data.size() << 1);
+        jsonObject.getAsJsonArray("fb").forEach(t -> {
+            JsonArray asJsonArray = t.getAsJsonArray();
+            list.add(new Trade(asJsonArray.get(0).getAsString(), asJsonArray.get(1).getAsFloat(),
+                    asJsonArray.get(3).getAsInt(), asJsonArray.get(5).getAsInt() == 1, asJsonArray.get(7).getAsInt()));
+        });
+        List<Trade> collect = list.parallelStream().filter(t -> t.total > 1000000).collect(Collectors.toList());
+        System.out.println("超过100万每单总笔数：" + collect.size());
+        Map<Boolean, List<Trade>> map = collect.parallelStream().collect(Collectors.groupingBy(t -> t.buy));
+        System.out.println("超过100万每单买入总笔数：" + map.get(true).size());
+        System.out.println("超过100万每单卖出总笔数：" + map.get(false).size());
+        System.out.println("超过100万每单买入总金额："
+                + map.get(true).parallelStream().map(t -> t.total).collect(Collectors.summarizingInt(t -> t)));
+        System.out.println("超过100万每单卖出总金额："
+                + map.get(false).parallelStream().map(t -> t.total).collect(Collectors.summarizingInt(t -> t)));
+//        TimeUnit.SECONDS.sleep(1);
+//        }
 
 //        int i = 50;
 ////		System.out.println(e - s);
@@ -201,7 +201,7 @@ public class ShareTests {
             TimeUnit.MILLISECONDS.sleep(500);
         }
     }
-    
+
     @Test
     public void shareTest() throws IOException, InterruptedException {
         String url = "http://hq.sinajs.cn/list=sz002075";
@@ -215,7 +215,7 @@ public class ShareTests {
     public void myShareTest() throws IOException, InterruptedException {
         String url = "http://hq.sinajs.cn/list=sh600678,sh600068"
                 + ",sh600989,sz300051,sz002277,sh603366,sz000716,sz300002,sh600853,sz002310,sz002154,sz002505,sz002305,sh600159";
-        url = "http://hq.sinajs.cn/list=sz002075,sz000908,sz000955,sz002581";
+        url = "http://hq.sinajs.cn/list=sz002075,sz002603,sz002156,sz002030";
         DecimalFormat format = new DecimalFormat("0.00");
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
         while (true) {
@@ -406,8 +406,8 @@ public class ShareTests {
         }
 
         List<String[]> collect = records.stream().filter(t -> {
-            if (Double.valueOf(t[5]) < 90 && Double.valueOf(t[6]) < 1 && Double.valueOf(t[8]) > 4
-                    && Double.valueOf(t[13]) > 0) {
+            if (Double.valueOf(t[5]) < 90 && Double.valueOf(t[6]) > 3 && Double.valueOf(t[6]) < 6
+                    && Double.valueOf(t[8]) > 4 && Double.valueOf(t[13]) > 0) {
                 return true;
             }
             return false;
@@ -472,23 +472,27 @@ public class ShareTests {
 //    }
 
     @Test
-    public void biddingPrice() throws IOException, InterruptedException {
+    public void biddingPrice() throws IOException, InterruptedException, URISyntaxException {
         // PhoneOSNew=2&StockID=300576&Token=b1c0216d069ff3c40e17ef97ee38dbf3&UserID=778861&a=GetStockBid&apiv=w21&c=StockL2Data
-        List<String> collect = Stream.of(
-                "603095, 002980, 300325, 002426, 000766, 300158, 300368, 002437, 002349, 600829, 300147, 002826, 603963, 600107, 600396, 000955, 002928, 300534, 603330, 300385, 002581, 002041, 002198, 002824, 002979, 300202, 000919, 603489, 603387, 300026, 300463, 002249, 300471, 002644, 600225, 300049, 002847, 300827, 300658, 002030, 603109, 600511, 603032, 300551, 002603, 300465, 002866, 600268, 300039, 300334, 000767, 002400, 600527, 300639, 002750, 300332, 300194, 002882, 300722, 002456, 603920, 601179, 002317, 603059, 300676, 300485, 300628, 603158, 600267, 600186, 603313, 002585, 002850, 600222, 603709, 600836, 600732, 600371, 688012, 603258, 600200, 300314, 300755, 002693, 002709, 300133, 300813, 600513, 002563, 002859, 002938, 600855, 002560, 002873, 002653, 603979, 600933, 688051, 002185, 000710, 002166, 002758, 002668, 300598, 000822, 688111, 002639, 603501, 600218, 002970, 002967, 002785, 000982, 002065, 300417, 603676, 600321, 688298, 002086, 600283, 603127, 601689, 600228, 603601, 300259, 603345, 300782, 600767, 600526, 000596, 600488, 002333, 002749, 600789, 600080, 002501, 000806, 603990, 002480, 002864, 000760, 002445, 000650, 002050, 002330, 002027, 603129, 002160, 002566, 688068, 603309, 300066, 300386, 600594, 002411, 002925, 600351, 002398, 300416, 002878, 002973, 000957, 300349, 300298, 002022, 002459, 300644, 600557, 300255, 002556, 300371, 300204, 002129, 600613, 300600, 603583, 300393, 603987, 002176, 600696, 300492, 603579, 603986, 002165, 300086, 002002, 000718, 002886, 603686, 000859, 000518, 002594, 002583, 300636, 603926, 002487, 600409, 002072, 600645, 603712"
-                        .split(",\\s"))
-                .collect(Collectors.toList());
+//        List<String> collect = Stream.of(
+//                "603095, 002980, 300325, 002426, 000766, 300158, 300368, 002437, 002349, 600829, 300147, 002826, 603963, 600107, 600396, 000955, 002928, 300534, 603330, 300385, 002581, 002041, 002198, 002824, 002979, 300202, 000919, 603489, 603387, 300026, 300463, 002249, 300471, 002644, 600225, 300049, 002847, 300827, 300658, 002030, 603109, 600511, 603032, 300551, 002603, 300465, 002866, 600268, 300039, 300334, 000767, 002400, 600527, 300639, 002750, 300332, 300194, 002882, 300722, 002456, 603920, 601179, 002317, 603059, 300676, 300485, 300628, 603158, 600267, 600186, 603313, 002585, 002850, 600222, 603709, 600836, 600732, 600371, 688012, 603258, 600200, 300314, 300755, 002693, 002709, 300133, 300813, 600513, 002563, 002859, 002938, 600855, 002560, 002873, 002653, 603979, 600933, 688051, 002185, 000710, 002166, 002758, 002668, 300598, 000822, 688111, 002639, 603501, 600218, 002970, 002967, 002785, 000982, 002065, 300417, 603676, 600321, 688298, 002086, 600283, 603127, 601689, 600228, 603601, 300259, 603345, 300782, 600767, 600526, 000596, 600488, 002333, 002749, 600789, 600080, 002501, 000806, 603990, 002480, 002864, 000760, 002445, 000650, 002050, 002330, 002027, 603129, 002160, 002566, 688068, 603309, 300066, 300386, 600594, 002411, 002925, 600351, 002398, 300416, 002878, 002973, 000957, 300349, 300298, 002022, 002459, 300644, 600557, 300255, 002556, 300371, 300204, 002129, 600613, 300600, 603583, 300393, 603987, 002176, 600696, 300492, 603579, 603986, 002165, 300086, 002002, 000718, 002886, 603686, 000859, 000518, 002594, 002583, 300636, 603926, 002487, 600409, 002072, 600645, 603712"
+//                        .split(",\\s"))
+//                .collect(Collectors.toList());
+        List<String> readAllLines = Files
+                .readAllLines(Paths.get(ShareTests.class.getResource("shareStockId.txt").toURI()));
         List<JsonArray> lists = new LinkedList<JsonArray>();
-        for (String id : collect) {
+        for (String id : readAllLines) {
+            if (id.trim().equals("")) {
+                continue;
+            }
             String url = "https://hq.kaipanla.com/w1/api/index.php";
             HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
                     .header("Content-Type", "application/x-www-form-urlencoded")
-                    .POST(BodyPublishers.ofString("PhoneOSNew=2&StockID=" + id
+                    .POST(BodyPublishers.ofString("PhoneOSNew=2&StockID=" + id.trim()
                             + "&Token=1c90c577bbf1c9abd83f4ff1295f37b8&UserID=778861&a=GetStockBid&apiv=w21&c=StockL2Data",
                             StandardCharsets.UTF_8))
                     .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             JsonObject jsonObject = JsonParser.parseString(httpResponse.body()).getAsJsonObject();
-            System.out.println(jsonObject);
             JsonElement jsonElement = jsonObject.get("preclose_px");
             if (null == jsonElement) {
                 continue;
@@ -512,6 +516,7 @@ public class ShareTests {
                 return o1.get(3).getAsInt() > o2.get(3).getAsInt() ? -1 : 1;
             }
         });
+        System.out.println(lists.size());
         List<JsonArray> collect2 = lists.stream().filter(t -> {
             float f = (t.get(3).getAsFloat() - t.get(5).getAsFloat()) / t.get(5).getAsFloat();
             t.add(f);
@@ -533,6 +538,24 @@ public class ShareTests {
                         + "&PhoneOSNew=2&Time=" + date
                         + "&Token=b1c0216d069ff3c40e17ef97ee38dbf3&Type=1&UserID=778861&a=GetStockList&apiv=w21&c=LongHuBang&st="
                         + size, StandardCharsets.UTF_8))
+                .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (StringUtils.isNoneBlank(httpResponse.body())) {
+            System.out.println(httpResponse.body());
+        }
+//        JsonObject jsonObject = JsonParser.parseString(httpResponse.body()).getAsJsonObject();
+//        System.out.println(jsonObject);
+    }
+    
+    @Test
+    public void tigerDetail() throws IOException, InterruptedException, ParseException {
+        // DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index=0&PhoneOSNew=2&Time=2020-04-02&Token=b1c0216d069ff3c40e17ef97ee38dbf3&Type=1&UserID=778861&a=GetStockList&apiv=w21&c=LongHuBang&st=300
+        String url = "https://lhb.kaipanla.com/w1/api/index.php?apiv=w21&PhoneOSNew=2";
+        int index = 0;
+        int size = 2;
+        String date = "2015-09-24";
+        HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(BodyPublishers.ofString("c=Stock&a=GetNewOneStockInfo&UserID=778861&Token=1c90c577bbf1c9abd83f4ff1295f37b8&Type=0&Time="+date+"&StockID=002030", StandardCharsets.UTF_8))
                 .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         if (StringUtils.isNoneBlank(httpResponse.body())) {
             System.out.println(httpResponse.body());
