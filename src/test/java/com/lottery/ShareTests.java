@@ -215,7 +215,7 @@ public class ShareTests {
     public void myShareTest() throws IOException, InterruptedException {
         String url = "http://hq.sinajs.cn/list=sh600678,sh600068"
                 + ",sh600989,sz300051,sz002277,sh603366,sz000716,sz300002,sh600853,sz002310,sz002154,sz002505,sz002305,sh600159";
-        url = "http://hq.sinajs.cn/list=sz002075,sz002603,sz002156,sz002030";
+        url = "http://hq.sinajs.cn/list=sz002603,sz002156,sz002480,sz002030";
         DecimalFormat format = new DecimalFormat("0.00");
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
         while (true) {
@@ -241,7 +241,7 @@ public class ShareTests {
                 }
             }
             System.out.println();
-            TimeUnit.MILLISECONDS.sleep(3992);
+            TimeUnit.MILLISECONDS.sleep(1992);
         }
     }
 
@@ -347,20 +347,37 @@ public class ShareTests {
         String url = "https://hq.kaipanla.com/w1/api/index.php";
         int size = 3;
         int index = 0;
-        while (true) {
-            HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .POST(BodyPublishers.ofString("Index=" + index
-                            + "&Order=1&PhoneOSNew=2&Type=1&ZSType=7&a=RealRankingInfo&apiv=w21&c=ZhiShuRanking&st="
-                            + size, StandardCharsets.UTF_8))
-                    .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            JsonArray jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("list")
-                    .getAsJsonArray();
-            jsonArray.forEach(System.out::println);
-            System.out.println("---------------------");
-            Thread.sleep(3000);
-        }
+        String date = "2020-04-19";
+//        while (true) {
+        HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(BodyPublishers.ofString("Index=" + index
+                        + "&Order=1&PhoneOSNew=2&Type=1&ZSType=7&a=RealRankingInfo&apiv=w21&c=ZhiShuRanking&Date="
+                        + date + "&st=" + size, StandardCharsets.UTF_8))
+                .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        System.out.println(httpResponse.body());
+        JsonArray jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("list")
+                .getAsJsonArray();
+        jsonArray.forEach(System.out::println);
+        System.out.println("---------------------");
+        Thread.sleep(3000);
+//        }
 
+    }
+
+    @Test
+    public void getOneShare() throws IOException, InterruptedException {
+        String url = "https://his.kaipanla.com/w1/api/index.php";
+        String date = "2019-10-28";
+        int size = 2;
+        int index = 0;
+        HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(BodyPublishers.ofString("Date=" + date
+                        + "&Filter=0&Order=1&PhoneOSNew=2&Ratio=6&Type=6&a=HisRankingInfo_W8&apiv=w21&c=HisStockRanking&index="
+                        + index + "&st=" + size, StandardCharsets.UTF_8))
+                .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        System.out.println(httpResponse.body());
     }
 
     @Test
@@ -406,7 +423,7 @@ public class ShareTests {
         }
 
         List<String[]> collect = records.stream().filter(t -> {
-            if (Double.valueOf(t[5]) < 90 && Double.valueOf(t[6]) > 3 && Double.valueOf(t[6]) < 6
+            if (Double.valueOf(t[5]) < 90 && Double.valueOf(t[6]) > 5 && Double.valueOf(t[6]) < 6
                     && Double.valueOf(t[8]) > 4 && Double.valueOf(t[13]) > 0) {
                 return true;
             }
@@ -531,7 +548,7 @@ public class ShareTests {
         String url = "https://lhb.kaipanla.com/w1/api/index.php";
         int index = 0;
         int size = 2;
-        String date = "2015-09-24";
+        String date = "2015-09-26";
         HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .POST(BodyPublishers.ofString("DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index=" + index
@@ -545,17 +562,21 @@ public class ShareTests {
 //        JsonObject jsonObject = JsonParser.parseString(httpResponse.body()).getAsJsonObject();
 //        System.out.println(jsonObject);
     }
-    
+
     @Test
     public void tigerDetail() throws IOException, InterruptedException, ParseException {
         // DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index=0&PhoneOSNew=2&Time=2020-04-02&Token=b1c0216d069ff3c40e17ef97ee38dbf3&Type=1&UserID=778861&a=GetStockList&apiv=w21&c=LongHuBang&st=300
         String url = "https://lhb.kaipanla.com/w1/api/index.php?apiv=w21&PhoneOSNew=2";
         int index = 0;
         int size = 2;
-        String date = "2015-09-24";
+        String date = "2015-09-26";
+        String stockId = "300318";
         HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
                 .header("Content-Type", "application/x-www-form-urlencoded")
-                .POST(BodyPublishers.ofString("c=Stock&a=GetNewOneStockInfo&UserID=778861&Token=1c90c577bbf1c9abd83f4ff1295f37b8&Type=0&Time="+date+"&StockID=002030", StandardCharsets.UTF_8))
+                .POST(BodyPublishers.ofString(
+                        "c=Stock&a=GetNewOneStockInfo&UserID=778861&Token=1c90c577bbf1c9abd83f4ff1295f37b8&Type=0&Time="
+                                + date + "&StockID=" + stockId,
+                        StandardCharsets.UTF_8))
                 .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         if (StringUtils.isNoneBlank(httpResponse.body())) {
             System.out.println(httpResponse.body());
