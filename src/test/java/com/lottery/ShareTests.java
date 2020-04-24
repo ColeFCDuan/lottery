@@ -215,7 +215,7 @@ public class ShareTests {
     public void myShareTest() throws IOException, InterruptedException {
         String url = "http://hq.sinajs.cn/list=sh600678,sh600068"
                 + ",sh600989,sz300051,sz002277,sh603366,sz000716,sz300002,sh600853,sz002310,sz002154,sz002505,sz002305,sh600159";
-        url = "http://hq.sinajs.cn/list=sz002603,sz002156,sz002480,sz002030";
+        url = "http://hq.sinajs.cn/list=sz002603,sz002156,sz002480,sh601789,sz000019,sz000061";
         DecimalFormat format = new DecimalFormat("0.00");
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
         while (true) {
@@ -344,23 +344,23 @@ public class ShareTests {
 
     @Test
     public void getTopPlate() throws IOException, InterruptedException {
-        String url = "https://hq.kaipanla.com/w1/api/index.php";
-        int size = 3;
+        String url = "https://his.kaipanla.com/w1/api/index.php";
+        int size = 5000;
         int index = 0;
-        String date = "2020-04-19";
+        String date = "2019-11-02";
 //        while (true) {
-        HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .POST(BodyPublishers.ofString("Index=" + index
-                        + "&Order=1&PhoneOSNew=2&Type=1&ZSType=7&a=RealRankingInfo&apiv=w21&c=ZhiShuRanking&Date="
-                        + date + "&st=" + size, StandardCharsets.UTF_8))
-                .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-        System.out.println(httpResponse.body());
-        JsonArray jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("list")
-                .getAsJsonArray();
-        jsonArray.forEach(System.out::println);
-        System.out.println("---------------------");
-        Thread.sleep(3000);
+            HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .POST(BodyPublishers.ofString("Date=" + date + "&Index=" + index
+                            + "&Order=1&PhoneOSNew=2&Type=1&ZSType=7&a=RealRankingInfo&apiv=w21&c=ZhiShuRanking&st="
+                            + size, StandardCharsets.UTF_8))
+                    .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            System.out.println(httpResponse.body());
+            JsonArray jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("list")
+                    .getAsJsonArray();
+            jsonArray.forEach(System.out::println);
+            System.out.println("---------------------");
+            Thread.sleep(3000);
 //        }
 
     }
@@ -368,8 +368,8 @@ public class ShareTests {
     @Test
     public void getOneShare() throws IOException, InterruptedException {
         String url = "https://his.kaipanla.com/w1/api/index.php";
-        String date = "2019-10-27";
-        int size = 2;
+        String date = "2019-10-28";
+        int size = 1;
         int index = 0;
         HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
                 .header("Content-Type", "application/x-www-form-urlencoded")
@@ -377,7 +377,9 @@ public class ShareTests {
                         + "&Filter=0&Order=1&PhoneOSNew=2&Ratio=6&Type=6&a=HisRankingInfo_W8&apiv=w21&c=HisStockRanking&index="
                         + index + "&st=" + size, StandardCharsets.UTF_8))
                 .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-        System.out.println(httpResponse.body().trim());
+        System.out.println(httpResponse.body());
+        System.out.println(
+                JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("list").getAsJsonArray().size());
     }
 
     @Test
