@@ -368,7 +368,7 @@ public class ShareTests {
     @Test
     public void getOneShare() throws IOException, InterruptedException {
         String url = "https://his.kaipanla.com/w1/api/index.php";
-        String date = "2019-10-28";
+        String date = "2019-10-27";
         int size = 2;
         int index = 0;
         HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
@@ -377,7 +377,7 @@ public class ShareTests {
                         + "&Filter=0&Order=1&PhoneOSNew=2&Ratio=6&Type=6&a=HisRankingInfo_W8&apiv=w21&c=HisStockRanking&index="
                         + index + "&st=" + size, StandardCharsets.UTF_8))
                 .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-        System.out.println(httpResponse.body());
+        System.out.println(httpResponse.body().trim());
     }
 
     @Test
@@ -452,6 +452,7 @@ public class ShareTests {
     }
 
     @Test
+    @Deprecated
     public void getSelfShare() throws IOException, InterruptedException {
         String url = "https://hq.kaipanla.com/w1/api/index.php";
         int size = 4000;
@@ -463,18 +464,18 @@ public class ShareTests {
                         + "&Filter=0&Order=1&PhoneOSNew=2&Ratio=6&Type=6&a=RealRankingInfo_W8&apiv=w21&c=NewStockRanking&index="
                         + index + "&st=" + size, StandardCharsets.UTF_8))
                 .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-        JsonArray jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("list")
-                .getAsJsonArray();
+        System.out.println(httpResponse.body());
+//        JsonArray jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("list").getAsJsonArray();
         // ["002076","雪莱特","",0,"病毒防治、环保",2.7,10.2,83533938,5.33,0,1611541032,42995098,0,42995098,51.47,0,51.47,2.67,0,2.67,11.11,1.12803,0,"首板","",5.33,"",0,0,0,"","",""]
         // id, 名称, 是否游资, 未知，板块，价格, 涨幅，成交额，实际换手，涨速，实际流通，主力买，主力卖，主力净额，
         // 未知，未知，未知，未知，未知，净流占比，区间涨幅，量比，未知，板数，龙几，实际换手，未知，未知，收盘封单，最大封单
-        List<String> stocks = new ArrayList<String>(200);
-        System.out.println(jsonArray.size());
-        for (int i = 0; i < 200; i++) {
-            System.out.println(jsonArray.get(i).getAsJsonArray().get(6));
-            stocks.add(jsonArray.get(i).getAsJsonArray().get(0).getAsString());
-        }
-        System.out.println(stocks);
+//        List<String> stocks = new ArrayList<String>(200);
+//        System.out.println(jsonArray.size());
+//        for (int i = 0; i < 200; i++) {
+//            System.out.println(jsonArray.get(i).getAsJsonArray().get(6));
+//            stocks.add(jsonArray.get(i).getAsJsonArray().get(0).getAsString());
+//        }
+//        System.out.println(stocks);
     }
 
 //    class Share {
