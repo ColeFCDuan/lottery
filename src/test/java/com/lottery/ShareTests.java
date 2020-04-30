@@ -47,9 +47,9 @@ public class ShareTests {
     public void speendTest() throws IOException, InterruptedException {// 1643082 //11467725 //4913317
         String url = "http://hq.sinajs.cn/list=sz000908";
         url = "https://hq.kaipanla.com/w1/api/index.php";
-        int index = 5000;
+        int index = 6000;
         int size = 6000;
-        String stockId = "002581";
+        String stockId = "002156";
 //        while (true) {
         HttpResponse<String> httpResponse = HttpClient
                 .newHttpClient().send(
@@ -219,10 +219,22 @@ public class ShareTests {
         DecimalFormat format = new DecimalFormat("0.00");
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
         while (true) {
-            HttpResponse<String> httpResponse = HttpClient.newHttpClient()
-                    .send(HttpRequest.newBuilder(URI.create(url)).build(), HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(
+                    HttpRequest.newBuilder(URI.create("http://hq.sinajs.cn/list=sh000001")).build(),
+                    HttpResponse.BodyHandlers.ofString());
             String str = httpResponse.body();
-            String[] result = str.split("\n");
+            // var
+            // hq_str_sh000001="上证指数,2819.9914,2815.4947,2779.3318,2821.7450,2779.3318,0,0,77015985,74140680689,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2020-04-28,09:55:38,00,";
+            // 名称，开，昨收，当前，高
+            String[] result = str.split(",");
+
+            System.out.println(
+                    result[0].split("\"")[1] + "\t" + Math.ceil(Float.valueOf(result[3]) - Float.valueOf(result[2])));
+
+            httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url)).build(),
+                    HttpResponse.BodyHandlers.ofString());
+            str = httpResponse.body();
+            result = str.split("\n");
             System.out.println(simpleDateFormat.format(new Date()));
 //			System.out.println(Stream.of(result[0].split(",")).collect(Collectors.joining("\t")));
             for (int i = 0; i < result.length; i++) {
@@ -234,7 +246,9 @@ public class ShareTests {
 //                System.out.println(tmp[10] + "--" + tmp[11]);
                 System.out.print(tmp[0].split("\"")[1] + "\t" + tmp[0].split("=\"")[0].split("_")[2] + "\t" + tmp[3]
                         + "\t" + format.format((Float.valueOf(tmp[3]) / Float.valueOf(tmp[2]) - 1) * 100) + "%\t"
-                        + (int) Math.floor(Float.valueOf(tmp[10]) / 100) + "\t" + tmp[11]);
+                        + ((Float.valueOf(tmp[10]) == 0) ? (int) Math.floor(Float.valueOf(tmp[20]) / 100)
+                                : (int) Math.floor(Float.valueOf(tmp[10]) / 100))
+                        + "\t" + tmp[11]);
                 System.out.print("\t\t");
                 if ((i & 1) == 1) {
                     System.out.println();
@@ -344,11 +358,11 @@ public class ShareTests {
 
     @Test
     public void getTopPlate() throws IOException, InterruptedException {
-        String url = "https://his.kaipanla.com/w1/api/index.php";
-        int size = 5000;
+        String url = "https://hq.kaipanla.com/w1/api/index.php";
+        int size = 3;
         int index = 0;
-        String date = "2019-11-02";
-//        while (true) {
+        String date = "2020-04-27";
+        while (true) {
             HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
                     .header("Content-Type", "application/x-www-form-urlencoded")
                     .POST(BodyPublishers.ofString("Date=" + date + "&Index=" + index
@@ -361,15 +375,14 @@ public class ShareTests {
             jsonArray.forEach(System.out::println);
             System.out.println("---------------------");
             Thread.sleep(3000);
-//        }
-
+        }
     }
 
     @Test
     public void getOneShare() throws IOException, InterruptedException {
         String url = "https://his.kaipanla.com/w1/api/index.php";
-        String date = "2019-10-28";
-        int size = 1;
+        String date = "2020-04-27";
+        int size = 3;
         int index = 0;
         HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
                 .header("Content-Type", "application/x-www-form-urlencoded")
@@ -377,9 +390,25 @@ public class ShareTests {
                         + "&Filter=0&Order=1&PhoneOSNew=2&Ratio=6&Type=6&a=HisRankingInfo_W8&apiv=w21&c=HisStockRanking&index="
                         + index + "&st=" + size, StandardCharsets.UTF_8))
                 .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        System.out.println(httpResponse.body().strip());
+        System.out.println(JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("list").getAsJsonArray()
+                .get(0).getAsJsonArray().size());
+    }
+
+    @Test
+    public void getOrganization() throws IOException, InterruptedException {
+        String url = "https://lhb.kaipanla.com/w1/api/index.php";
+        String date = "2020-04-23";
+        int size = 1;
+        int index = 0;
+        HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(BodyPublishers.ofString("DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index=" + index
+                        + "&PhoneOSNew=2&Time=" + date
+                        + "&Token=b1c0216d069ff3c40e17ef97ee38dbf3&Type=1&UserID=778861&a=GetBusinessList&apiv=w21&c=LongHuBang&st="
+                        + size, StandardCharsets.UTF_8))
+                .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         System.out.println(httpResponse.body());
-        System.out.println(
-                JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("list").getAsJsonArray().size());
     }
 
     @Test
@@ -412,8 +441,11 @@ public class ShareTests {
             jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("list").getAsJsonArray();
             // ["300576","\u5bb9\u5927\u611f\u5149","\u6e38\u8d44",0,"\u5149\u523b\u80f6\u3001\u5927\u57fa\u91d1\u4e8c\u671f",40.48,10,612149442,27.23,0,2389977656,92028225,-27485909,64542316,
             // 15.03,4.49,10.54,3.85,1.15,2.7,9.26,1.0561,0,"3\u59292\u677f","\u9f99\u4e00",27.23,"",0,33586256,142434944,"",""]
-            // id, 名称, 是否游资, 未知，板块，价格, 涨幅，成交额，实际换手，涨速，实际流通，主力买，主力卖，主力净额，
-            // 未知，未知，未知，未知，未知，净流占比，区间涨幅，量比，未知，板数，龙几，实际换手，未知，未知，收盘封单，最大封单
+            // 0 id, 1 名称, 2 是否游资, 3 未知，4 板块，5 价格, 6 涨幅，7 成交额，8 实际换手，9 涨速，10 实际流通，11 主力买，12
+            // 主力卖，13 主力净额，
+            // 14 买成占比，15 卖成占比，16 净成占比，17 买流占比，18 卖流占比，19 净流占比，20 区间涨幅，21 量比，22 未知，23 板数，24
+            // 龙几，25 实际换手，26 未知，27 未知，
+            // 28 收盘封单，29 最大封单
             jsonArray.forEach(t -> {
                 JsonArray j = t.getAsJsonArray();
                 String[] tmp = new String[] { j.get(0).getAsString(), j.get(1).getAsString(), j.get(2).getAsString(),
@@ -427,6 +459,7 @@ public class ShareTests {
         List<String[]> collect = records.stream().filter(t -> {
             if (Double.valueOf(t[5]) < 90 && Double.valueOf(t[6]) > 5 && Double.valueOf(t[6]) < 6
                     && Double.valueOf(t[8]) > 4 && Double.valueOf(t[13]) > 0) {
+                System.out.println(Arrays.toString(t));
                 return true;
             }
             return false;
@@ -446,7 +479,6 @@ public class ShareTests {
             // 涨停次数，溢价5%次数，次日红盘率，首板封板率，首板破板率，连板率
             if (jsonArray.get(0).getAsInt() >= 5) {
                 stockIds.add(id);
-                System.out.println(Arrays.toString(stockId));
             }
         }
         System.out.println(stockIds);
@@ -459,7 +491,7 @@ public class ShareTests {
         String url = "https://hq.kaipanla.com/w1/api/index.php";
         int size = 4000;
         int index = 0;
-        String date = "2020-04-15";
+        String date = "2020-04-27";
         HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .POST(BodyPublishers.ofString("Date=" + date
@@ -512,6 +544,7 @@ public class ShareTests {
                             + "&Token=1c90c577bbf1c9abd83f4ff1295f37b8&UserID=778861&a=GetStockBid&apiv=w21&c=StockL2Data",
                             StandardCharsets.UTF_8))
                     .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            System.out.println(httpResponse.body());
             JsonObject jsonObject = JsonParser.parseString(httpResponse.body()).getAsJsonObject();
             JsonElement jsonElement = jsonObject.get("preclose_px");
             if (null == jsonElement) {
@@ -546,6 +579,23 @@ public class ShareTests {
     }
 
     @Test
+    public void getOnebiddingPrice() throws IOException, InterruptedException, URISyntaxException {
+        // PhoneOSNew=2&StockID=300576&Token=b1c0216d069ff3c40e17ef97ee38dbf3&UserID=778861&a=GetStockBid&apiv=w21&c=StockL2Data
+        String stockId = "300719";
+        String token = "1c90c577bbf1c9abd83f4ff1295f37b8";
+        String url = "https://hq.kaipanla.com/w1/api/index.php";
+        HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(
+                HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "application/x-www-form-urlencoded")
+                        .POST(BodyPublishers.ofString(
+                                "PhoneOSNew=2&StockID=" + stockId + "&Token=" + token
+                                        + "&UserID=778861&a=GetStockBid&apiv=w21&c=StockL2Data",
+                                StandardCharsets.UTF_8))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        System.out.println(httpResponse.body());
+    }
+
+    @Test
     public void tiger() throws IOException, InterruptedException, ParseException {
         // DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index=0&PhoneOSNew=2&Time=2020-04-02&Token=b1c0216d069ff3c40e17ef97ee38dbf3&Type=1&UserID=778861&a=GetStockList&apiv=w21&c=LongHuBang&st=300
         String url = "https://lhb.kaipanla.com/w1/api/index.php";
@@ -559,6 +609,74 @@ public class ShareTests {
                         + "&Token=b1c0216d069ff3c40e17ef97ee38dbf3&Type=1&UserID=778861&a=GetStockList&apiv=w21&c=LongHuBang&st="
                         + size, StandardCharsets.UTF_8))
                 .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (StringUtils.isNoneBlank(httpResponse.body())) {
+            System.out.println(httpResponse.body());
+        }
+//        JsonObject jsonObject = JsonParser.parseString(httpResponse.body()).getAsJsonObject();
+//        System.out.println(jsonObject);
+    }
+
+    @Test
+    public void limitUp() throws IOException, InterruptedException, ParseException {
+        // PhoneOSNew=2&StockID=002932&a=GetZhangTingGene&apiv=w21&c=StockL2Data
+        String url = "https://hq.kaipanla.com/w1/api/index.php";
+        String stockID = "300719";
+        HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(
+                HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "application/x-www-form-urlencoded")
+                        .POST(BodyPublishers.ofString(
+                                "PhoneOSNew=2&StockID=" + stockID + "&a=GetZhangTingGene&apiv=w21&c=StockL2Data",
+                                StandardCharsets.UTF_8))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (StringUtils.isNoneBlank(httpResponse.body())) {
+            // {"List":[1,1,100,100,0,0],"ttag":0.00063900000000006,"errcode":"0"}
+            // 涨停次数， 溢价5%次数， 次日红盘率， 首板封板率， 首板破板率， 连板率
+            System.out.println(httpResponse.body());
+        }
+    }
+
+    @Test
+    public void stockAndPlate() throws IOException, InterruptedException, ParseException {
+        // PhoneOSNew=2&StockID=002932&a=GetZhangTingGene&apiv=w21&c=StockL2Data
+        String url = "https://hq.kaipanla.com/w1/api/index.php";
+        String stockID = "300719";
+        String token = "1c90c577bbf1c9abd83f4ff1295f37b8";
+        HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(
+                HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "application/x-www-form-urlencoded")
+                        .POST(BodyPublishers.ofString(
+                                "PhoneOSNew=2&StockID=" + stockID + "&Token=" + token
+                                        + "&Type=2&UserID=778861&a=GetStockIDPlate_New&apiv=w21&c=StockL2Data",
+                                StandardCharsets.UTF_8))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (StringUtils.isNoneBlank(httpResponse.body())) {
+            System.out.println(httpResponse.body());
+        }
+//        JsonObject jsonObject = JsonParser.parseString(httpResponse.body()).getAsJsonObject();
+//        System.out.println(jsonObject);
+    }
+
+    /**
+     * 
+     * @desc: 盘口
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws ParseException       void
+     */
+    @Test
+    public void handicap() throws IOException, InterruptedException, ParseException {
+        // DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index=0&PhoneOSNew=2&Time=2020-04-02&Token=b1c0216d069ff3c40e17ef97ee38dbf3&Type=1&UserID=778861&a=GetStockList&apiv=w21&c=LongHuBang&st=300
+        String url = "https://hq.kaipanla.com/w1/api/index.php";
+        String stockID = "300719";
+        String token = "1c90c577bbf1c9abd83f4ff1295f37b8";
+        HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(
+                HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "application/x-www-form-urlencoded")
+                        .POST(BodyPublishers.ofString(
+                                "DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&PhoneOSNew=2&StockID=" + stockID
+                                        + "&Token=" + token + "&UserID=778861&a=GetStockPanKou&apiv=w21&c=StockL2Data",
+                                StandardCharsets.UTF_8))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         if (StringUtils.isNoneBlank(httpResponse.body())) {
             System.out.println(httpResponse.body());
         }
@@ -592,9 +710,9 @@ public class ShareTests {
     public void tradeDetail() throws IOException, InterruptedException {
         // DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index=4200&PhoneOSNew=3193&StockID=002426&Type=2&UserID=778861&a=GetStockFenBi2&apiv=w21&c=StockL2Data&st=10
         String url = "https://hq.kaipanla.com/w1/api/index.php";
-        String id = "002426";
-        int index = 3905;
-        int size = 10;
+        String id = "002156";
+        int index = 6000;
+        int size = 6000;
         HttpResponse<String> httpResponse = HttpClient
                 .newHttpClient().send(
                         HttpRequest.newBuilder(URI.create(url))
