@@ -609,6 +609,8 @@ public class ShareTests {
                                 + "&Tur=30&Type=3&VOrder=&VType=1&Vol=500&a=GetWeiTuo_W14&apiv=w21&c=StockL2Data&st=" + size,
                                 StandardCharsets.UTF_8))
                         .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        //["14:59:58","18901777","24.5","492","1207237","2","1","0","0","1588921198"]
+        // 时间，未知，价格，笔数，金额，未知，买 1/卖 2，未知，未知，未知
         System.out.println(httpResponse.body());
     }
 
