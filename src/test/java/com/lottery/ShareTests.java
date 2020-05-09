@@ -361,7 +361,7 @@ public class ShareTests {
         String url = "https://hq.kaipanla.com/w1/api/index.php";
         int size = 3;
         int index = 0;
-        String date = "2020-04-27";
+        String date = "2020-05-07";
         while (true) {
             HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
                     .header("Content-Type", "application/x-www-form-urlencoded")
@@ -381,7 +381,7 @@ public class ShareTests {
     @Test
     public void getOneShare() throws IOException, InterruptedException {
         String url = "https://his.kaipanla.com/w1/api/index.php";
-        String date = "2020-04-27";
+        String date = "2020-05-08";
         int size = 3;
         int index = 0;
         HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
@@ -596,6 +596,23 @@ public class ShareTests {
     }
 
     @Test
+    public void getEntrust() throws IOException, InterruptedException, URISyntaxException {
+        // PhoneOSNew=2&StockID=300576&Token=b1c0216d069ff3c40e17ef97ee38dbf3&UserID=778861&a=GetStockBid&apiv=w21&c=StockL2Data
+        String stockId = "002156";
+        int index = 0;
+        int size = 6000;
+        String url = "https://hq.kaipanla.com/w1/api/index.php";
+        HttpResponse<String> httpResponse = HttpClient.newHttpClient()
+                .send(HttpRequest.newBuilder(URI.create(url))
+                        .header("Content-Type", "application/x-www-form-urlencoded")
+                        .POST(BodyPublishers.ofString("Index=" + index + "&PhoneOSNew=2&StockID=" + stockId
+                                + "&Tur=30&Type=3&VOrder=&VType=1&Vol=500&a=GetWeiTuo_W14&apiv=w21&c=StockL2Data&st=" + size,
+                                StandardCharsets.UTF_8))
+                        .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        System.out.println(httpResponse.body());
+    }
+
+    @Test
     public void tiger() throws IOException, InterruptedException, ParseException {
         // DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index=0&PhoneOSNew=2&Time=2020-04-02&Token=b1c0216d069ff3c40e17ef97ee38dbf3&Type=1&UserID=778861&a=GetStockList&apiv=w21&c=LongHuBang&st=300
         String url = "https://lhb.kaipanla.com/w1/api/index.php";
@@ -620,7 +637,7 @@ public class ShareTests {
     public void limitUp() throws IOException, InterruptedException, ParseException {
         // PhoneOSNew=2&StockID=002932&a=GetZhangTingGene&apiv=w21&c=StockL2Data
         String url = "https://hq.kaipanla.com/w1/api/index.php";
-        String stockID = "300719";
+        String stockID = "000001";
         HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(
                 HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "application/x-www-form-urlencoded")
                         .POST(BodyPublishers.ofString(
@@ -724,7 +741,7 @@ public class ShareTests {
                                 .build(),
                         HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         JsonObject jsonObject = JsonParser.parseString(httpResponse.body()).getAsJsonObject();
-        System.out.println(jsonObject);
+        System.out.println(jsonObject.get("fb").getAsJsonArray());
     }
 
     @Ignore
