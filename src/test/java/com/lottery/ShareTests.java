@@ -610,7 +610,7 @@ public class ShareTests {
                                 StandardCharsets.UTF_8))
                         .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         //["14:59:58","18901777","24.5","492","1207237","2","1","0","0","1588921198"]
-        // 时间，未知，价格，笔数，金额，未知，买 1/卖 2，未知，未知，未知
+        // 时间，未知，价格，笔数，金额，买 1/卖 2，未知，未知，撤 1，未知
         System.out.println(httpResponse.body());
     }
 
@@ -620,7 +620,7 @@ public class ShareTests {
         String url = "https://lhb.kaipanla.com/w1/api/index.php";
         int index = 0;
         int size = 2;
-        String date = "2015-09-26";
+        String date = "2020-05-08";
         HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .POST(BodyPublishers.ofString("DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index=" + index
