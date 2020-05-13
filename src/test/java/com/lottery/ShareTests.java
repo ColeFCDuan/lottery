@@ -215,7 +215,7 @@ public class ShareTests {
     public void myShareTest() throws IOException, InterruptedException {
         String url = "http://hq.sinajs.cn/list=sh600678,sh600068"
                 + ",sh600989,sz300051,sz002277,sh603366,sz000716,sz300002,sh600853,sz002310,sz002154,sz002505,sz002305,sh600159";
-        url = "http://hq.sinajs.cn/list=sz002603,sz002156,sz002480,sh601789,sz000019,sz000061";
+        url = "http://hq.sinajs.cn/list=sz002982,sh603256";
         DecimalFormat format = new DecimalFormat("0.00");
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
         while (true) {
@@ -379,6 +379,25 @@ public class ShareTests {
     }
 
     @Test
+    public void getShareDayK() throws IOException, InterruptedException, URISyntaxException {
+        // Index=0&PhoneOSNew=2&StockID=300719&Token=112c9d20dd5ce76ec3df4ae26103cdf3&Type=d&UserID=778861&a=GetKLineDay_W14&apiv=w21&c=StockLineData&st=1000
+        String url = "https://his.kaipanla.com/w1/api/index.php";
+        int size = 10000;
+        int index = 0;
+
+//        List<String> readAllLines = Files
+//                .readAllLines(Paths.get(ShareTests.class.getResource("shareStockId.txt").toURI()));
+        String stockId = "300719";
+        HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(BodyPublishers.ofString("Index=" + index + "&PhoneOSNew=2&StockID=" + stockId
+                        + "&Token=112c9d20dd5ce76ec3df4ae26103cdf3&Type=d&UserID=778861&a=GetKLineDay_W14&apiv=w21&c=StockLineData&st="
+                        + size, StandardCharsets.UTF_8))
+                .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        System.out.println(httpResponse.body().strip());
+    }
+
+    @Test
     public void getOneShare() throws IOException, InterruptedException {
         String url = "https://his.kaipanla.com/w1/api/index.php";
         String date = "2020-05-08";
@@ -455,15 +474,18 @@ public class ShareTests {
                 records.add(tmp);
             });
         }
-
+        Map<String, String> tmp = new HashMap<String, String>();
         List<String[]> collect = records.stream().filter(t -> {
-            if (Double.valueOf(t[5]) < 90 && Double.valueOf(t[6]) > 5 && Double.valueOf(t[6]) < 6
-                    && Double.valueOf(t[8]) > 4 && Double.valueOf(t[13]) > 0) {
-                System.out.println(Arrays.toString(t));
+            if (Double.valueOf(t[5]) < 90 && Double.valueOf(t[6]) > 8 && Double.valueOf(t[6]) < 9.9
+//                    && Double.valueOf(t[8]) > 4 && Double.valueOf(t[13]) > 0
+            ) {
+//                System.out.println(Arrays.toString(t));
+                tmp.put(t[0], t[6]);
                 return true;
             }
             return false;
         }).collect(Collectors.toList());
+        System.out.println(tmp);
         Set<String> stockIds = new HashSet<>();
         for (String[] stockId : collect) {
             String id = stockId[0];
@@ -602,14 +624,14 @@ public class ShareTests {
         int index = 0;
         int size = 6000;
         String url = "https://hq.kaipanla.com/w1/api/index.php";
-        HttpResponse<String> httpResponse = HttpClient.newHttpClient()
-                .send(HttpRequest.newBuilder(URI.create(url))
-                        .header("Content-Type", "application/x-www-form-urlencoded")
+        HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(
+                HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "application/x-www-form-urlencoded")
                         .POST(BodyPublishers.ofString("Index=" + index + "&PhoneOSNew=2&StockID=" + stockId
-                                + "&Tur=30&Type=3&VOrder=&VType=1&Vol=500&a=GetWeiTuo_W14&apiv=w21&c=StockL2Data&st=" + size,
-                                StandardCharsets.UTF_8))
-                        .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-        //["14:59:58","18901777","24.5","492","1207237","2","1","0","0","1588921198"]
+                                + "&Tur=30&Type=3&VOrder=&VType=1&Vol=500&a=GetWeiTuo_W14&apiv=w21&c=StockL2Data&st="
+                                + size, StandardCharsets.UTF_8))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        // ["14:59:58","18901777","24.5","492","1207237","2","1","0","0","1588921198"]
         // 时间，未知，价格，笔数，金额，买 1/卖 2，未知，未知，撤 1，未知
         System.out.println(httpResponse.body());
     }
