@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -50,17 +51,17 @@ public class ShareTests {
         int index = 6000;
         int size = 6000;
         String stockId = "002156";
+        HttpClient httpClient = HttpClient.newBuilder().executor(Executors.newFixedThreadPool(1)).build();
 //        while (true) {
-        HttpResponse<String> httpResponse = HttpClient
-                .newHttpClient().send(
-                        HttpRequest.newBuilder(URI.create(url))
-                                .header("Content-Type", "application/x-www-form-urlencoded")
-                                .POST(BodyPublishers.ofString("DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index="
-                                        + index + "&PhoneOSNew=3193&StockID=" + stockId
+        HttpResponse<String> httpResponse = httpClient.send(
+                HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "application/x-www-form-urlencoded")
+                        .POST(BodyPublishers.ofString(
+                                "DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index=" + index
+                                        + "&PhoneOSNew=3193&StockID=" + stockId
                                         + "&Type=2&UserID=778861&a=GetStockFenBi2&apiv=w21&c=StockL2Data&st=" + size,
-                                        StandardCharsets.UTF_8))
-                                .build(),
-                        HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                                StandardCharsets.UTF_8))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         JsonObject jsonObject = JsonParser.parseString(httpResponse.body()).getAsJsonObject();
         System.out.println(httpResponse.body());
         JsonArray data = jsonObject.getAsJsonArray("fb");
@@ -107,11 +108,12 @@ public class ShareTests {
                 .map(t -> t.split("\t")[2]).collect(Collectors.toList());
         List<String[]> list = new ArrayList<>();
         int i = 0;
+        HttpClient httpClient = HttpClient.newBuilder().executor(Executors.newFixedThreadPool(1)).build();
         for (String stockId : collect) {
             try {
                 String url = "https://m.0033.com/listv4/hs/" + stockId + "_1.json";
-                HttpResponse<String> httpResponse = HttpClient.newHttpClient()
-                        .send(HttpRequest.newBuilder(URI.create(url)).build(), HttpResponse.BodyHandlers.ofString());
+                HttpResponse<String> httpResponse = httpClient.send(HttpRequest.newBuilder(URI.create(url)).build(),
+                        HttpResponse.BodyHandlers.ofString());
                 JsonArray jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("data")
                         .getAsJsonObject().get("pageItems").getAsJsonArray();
                 for (JsonElement element : jsonArray) {
@@ -152,8 +154,9 @@ public class ShareTests {
         LinkedList<Integer> records = new LinkedList<>();
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         DecimalFormat format = new DecimalFormat("0.00");
+        HttpClient httpClient = HttpClient.newBuilder().executor(Executors.newFixedThreadPool(1)).build();
         while (true) {
-            HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(
+            HttpResponse<String> httpResponse = httpClient.send(
                     HttpRequest.newBuilder(URI.create(listUrl)).GET().build(),
                     HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             JsonArray jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("List")
@@ -169,7 +172,7 @@ public class ShareTests {
             Collections.reverse(tmp);
             records.addAll(tmp);
             if (s != 0 && records.size() > s) {
-                httpResponse = HttpClient.newHttpClient().send(
+                httpResponse = httpClient.send(
                         HttpRequest.newBuilder(URI.create(contentUrl))
                                 .header("Content-Type", "application/x-www-form-urlencoded")
                                 .POST(BodyPublishers.ofString(
@@ -218,8 +221,9 @@ public class ShareTests {
         url = "http://hq.sinajs.cn/list=sz002982,sh603256";
         DecimalFormat format = new DecimalFormat("0.00");
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
+        HttpClient httpClient = HttpClient.newBuilder().executor(Executors.newFixedThreadPool(1)).build();
         while (true) {
-            HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(
+            HttpResponse<String> httpResponse = httpClient.send(
                     HttpRequest.newBuilder(URI.create("http://hq.sinajs.cn/list=sh000001")).build(),
                     HttpResponse.BodyHandlers.ofString());
             String str = httpResponse.body();
@@ -231,7 +235,7 @@ public class ShareTests {
             System.out.println(
                     result[0].split("\"")[1] + "\t" + Math.ceil(Float.valueOf(result[3]) - Float.valueOf(result[2])));
 
-            httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url)).build(),
+            httpResponse = httpClient.send(HttpRequest.newBuilder(URI.create(url)).build(),
                     HttpResponse.BodyHandlers.ofString());
             str = httpResponse.body();
             result = str.split("\n");
@@ -362,8 +366,9 @@ public class ShareTests {
         int size = 3;
         int index = 0;
         String date = "2020-05-07";
+        HttpClient httpClient = HttpClient.newBuilder().executor(Executors.newFixedThreadPool(1)).build();
         while (true) {
-            HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
+            HttpResponse<String> httpResponse = httpClient.send(HttpRequest.newBuilder(URI.create(url))
                     .header("Content-Type", "application/x-www-form-urlencoded")
                     .POST(BodyPublishers.ofString("Date=" + date + "&Index=" + index
                             + "&Order=1&PhoneOSNew=2&Type=1&ZSType=7&a=RealRankingInfo&apiv=w21&c=ZhiShuRanking&st="
@@ -384,17 +389,219 @@ public class ShareTests {
         String url = "https://his.kaipanla.com/w1/api/index.php";
         int size = 10000;
         int index = 0;
+        int times = 4;
+        List<String> readAllLines = Files.readAllLines(Paths.get(ShareTests.class.getResource("share.txt").toURI()));
+        Map<String, List<String>> tmpRecord = new HashMap<>(2000);
+        Map<String, String> tmpRecordFail = new HashMap<>(2000);
+        Map<String, String> tmpRecordRun = new HashMap<>(2000);
+        Map<String, String> recordFail = new HashMap<>(4000);
+        Set<String> total = new HashSet<>(4000);
+        DecimalFormat format = new DecimalFormat("0.00");
+        HttpClient httpClient = HttpClient.newBuilder().executor(Executors.newFixedThreadPool(1)).build();
+        for (int i = 0; i < readAllLines.size(); i++) {
+            System.out.println("pregress... " + i);
+            String stockId = readAllLines.get(i).strip();
+            HttpResponse<String> httpResponse = httpClient.send(HttpRequest.newBuilder(URI.create(url))
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .POST(BodyPublishers.ofString("Index=" + index + "&PhoneOSNew=2&StockID=" + stockId
+                            + "&Token=112c9d20dd5ce76ec3df4ae26103cdf3&Type=d&UserID=778861&a=GetKLineDay_W14&apiv=w21&c=StockLineData&st="
+                            + size, StandardCharsets.UTF_8))
+                    .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            JsonArray jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("y")
+                    .getAsJsonArray();
+            double preClose = 0;
+            int limitup = 0;
+            for (int j = 0; j < jsonArray.size(); j++) {
+                JsonArray item = jsonArray.get(j).getAsJsonArray();
+                double open = item.get(0).getAsDouble();
+                if (preClose == 0) {
+                    preClose = open;
+                }
+                double close = item.get(1).getAsDouble();
+                double hight = item.get(2).getAsDouble();
+                double low = item.get(3).getAsDouble();
+                boolean up = (open == close && close == hight && hight == low) || (close - preClose) / preClose > 0.097;
+                if (up) {
+                    limitup++;
+                } else if (limitup <= times) {
+                    recordFail.put(stockId, j + ":" + format.format((close - preClose) / preClose * 100));
+                    break;
+                }
+                if (hight != low) {
+                    total.add(stockId);
+                    if (close > preClose) {
+                        List<String> list = tmpRecord.get(stockId);
+                        if (Objects.isNull(list)) {
+                            list = new ArrayList<>();
+                            tmpRecord.put(stockId, list);
+                        }
+                        list.add(format.format((hight - low) / low * 100));
+                    } else {
+                        List<String> list = tmpRecord.get(stockId);
+                        if (Objects.isNull(list)) {
+                            for (int k = 1; k <= 3 && i + k < jsonArray.size(); k++) {
+                                item = jsonArray.get(i + k).getAsJsonArray();
+                                double thight = item.get(2).getAsDouble();
+                                if (thight > (hight + low) / 2) {
+                                    tmpRecordRun.put(stockId,
+                                            "第" + (k + 1) + "hight:" + hight + " nowhight:" + hight + " nowlow:" + low);
+                                }
+                            }
+                        } else {
+                            tmpRecordFail.put(stockId, format.format(
+                                    (jsonArray.get(i + 1).getAsJsonArray().get(0).getAsDouble() - (hight - low) / 2)
+                                            / close));
+                        }
+                        break;
+                    }
+                } else if (!up) {
+                    System.out.println("------------------------");
+                }
+            }
+        }
+//保存数据到文件
+//        for (int i = 0; i < readAllLines.size(); i++) {
+//            System.out.println("pregress... " + i);
+//            String stockId = readAllLines.get(i).strip();
+//            HttpResponse<String> httpResponse = httpClient.send(HttpRequest.newBuilder(URI.create(url))
+//                    .header("Content-Type", "application/x-www-form-urlencoded")
+//                    .POST(BodyPublishers.ofString("Index=" + index + "&PhoneOSNew=2&StockID=" + stockId
+//                            + "&Token=112c9d20dd5ce76ec3df4ae26103cdf3&Type=d&UserID=778861&a=GetKLineDay_W14&apiv=w21&c=StockLineData&st="
+//                            + size, StandardCharsets.UTF_8))
+//                    .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+//            JsonArray jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("y")
+//                    .getAsJsonArray();
+//            Files.writeString(Paths.get("/home/tgj/t/shareDayK.txt"), stockId + "\t" + jsonArray.toString() + "\r\n", StandardOpenOption.APPEND);
+//        }
+        System.out.println(recordFail);
+        System.out.println(tmpRecord);
+        System.out.println(tmpRecordRun);
+        System.out.println(tmpRecordFail);
+        System.out.println(total.size());
+//        String stockId = "300719";
+//        HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
+//                .header("Content-Type", "application/x-www-form-urlencoded")
+//                .POST(BodyPublishers.ofString("Index=" + index + "&PhoneOSNew=2&StockID=" + stockId
+//                        + "&Token=112c9d20dd5ce76ec3df4ae26103cdf3&Type=d&UserID=778861&a=GetKLineDay_W14&apiv=w21&c=StockLineData&st="
+//                        + size, StandardCharsets.UTF_8))
+//                .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+//        System.out.println(httpResponse.body().strip());
+    }
 
-//        List<String> readAllLines = Files
-//                .readAllLines(Paths.get(ShareTests.class.getResource("shareStockId.txt").toURI()));
-        String stockId = "300719";
+    @Test
+    public void getOneShareDayK() throws IOException, InterruptedException {
+        String url = "https://his.kaipanla.com/w1/api/index.php";
+        int size = 10000;
+        int index = 0;
+        String stockId = "000970";
         HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .POST(BodyPublishers.ofString("Index=" + index + "&PhoneOSNew=2&StockID=" + stockId
                         + "&Token=112c9d20dd5ce76ec3df4ae26103cdf3&Type=d&UserID=778861&a=GetKLineDay_W14&apiv=w21&c=StockLineData&st="
                         + size, StandardCharsets.UTF_8))
                 .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-        System.out.println(httpResponse.body().strip());
+        System.out.println(
+                JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("y").getAsJsonArray().size());
+    }
+
+    @Test
+    public void getShareDayKByFile() throws IOException, InterruptedException, URISyntaxException {
+        // Index=0&PhoneOSNew=2&StockID=300719&Token=112c9d20dd5ce76ec3df4ae26103cdf3&Type=d&UserID=778861&a=GetKLineDay_W14&apiv=w21&c=StockLineData&st=1000
+        List<String> readAllLines = Files.readAllLines(Paths.get("/home/tgj/t/shareDayK.txt"));
+        Map<String, List<String>> tmpRecord = new HashMap<>(2000);
+        Map<String, String> tmpRecordOk = new HashMap<>(2000);
+        Map<String, String> tmpRecordFail = new HashMap<>(2000);
+        Map<String, String> tmpRecordRun = new HashMap<>(2000);
+        Map<String, String> recordFail = new HashMap<>(4000);
+        Set<String> total = new HashSet<>(4000);
+        int times = 4;
+        DecimalFormat format = new DecimalFormat("0.00");
+        for (int i = 0; i < readAllLines.size(); i++) {
+            System.out.println("pregress... " + i);
+            String[] split = readAllLines.get(i).split("\t");
+            String stockId = split[0];
+            JsonArray jsonArray = JsonParser.parseString(split[1]).getAsJsonArray();
+            double preClose = 0;
+            int limitup = 0;
+            for (int j = 0; j < jsonArray.size(); j++) {
+                JsonArray item = jsonArray.get(j).getAsJsonArray();
+                double open = item.get(0).getAsDouble();
+                if (open < 0) {
+                    break;
+                }
+                if (preClose == 0) {
+                    preClose = open;
+                }
+                double close = item.get(1).getAsDouble();
+                double hight = item.get(2).getAsDouble();
+                double low = item.get(3).getAsDouble();
+                boolean up = (open == close && close == hight && hight == low) || (close - preClose) / preClose > 0.097;
+                if (up) {
+                    limitup++;
+                } else if (limitup <= times) {
+                    recordFail.put(stockId, j + ":" + format.format((close - preClose) / preClose * 100));
+                    break;
+                }
+                if (hight != low) {
+                    total.add(stockId);
+                    if (close > preClose) {
+                        List<String> list = tmpRecord.get(stockId);
+                        if (Objects.isNull(list)) {
+                            list = new ArrayList<>();
+                            list.add(format.format((hight - low) / low * 100));
+                            tmpRecord.put(stockId, list);
+                        } else {
+                            list.add(format.format((close - preClose) / preClose * 100));
+                        }
+                    } else {
+                        List<String> list = tmpRecord.get(stockId);
+                        if (Objects.isNull(list)) {
+                            boolean run = false;
+                            for (int k = 1; k <= 3 && i + k < jsonArray.size(); k++) {
+                                item = jsonArray.get(i + k).getAsJsonArray();
+                                double thight = item.get(2).getAsDouble();
+                                if (thight > (hight + low) / 2) {
+                                    run = true;
+                                    tmpRecordRun.put(stockId, "第" + (k + 1) + " hight:" + hight + " nowhight:" + hight
+                                            + " nowlow:" + low);
+                                    break;
+                                }
+                            }
+                            if (!run) {
+                                String str = "";
+                                if (i + 1 < jsonArray.size() && close > 0) {
+                                    // 第二天开盘平均
+                                    str = format.format((jsonArray.get(i + 1).getAsJsonArray().get(0).getAsDouble()
+                                            - (hight + low) / 2) / close * 100);
+                                } else {
+                                    str = "UNKOWN";
+                                }
+                                tmpRecordFail.put(stockId, str);
+                            }
+                        } else {
+                            // 平均
+                            list.add(format.format(((hight + low) / 2 / preClose * 100)));
+                            tmpRecordOk.put(stockId, list.stream().collect(Collectors.joining(",")));
+                        }
+                        break;
+                    }
+                    preClose = close;
+                } else if (!up) {
+                    System.out.println("------------------------");
+                }
+            }
+        }
+        Files.writeString(Paths.get("/home/tgj/t/recordFail.txt"), recordFail.toString(),
+                StandardOpenOption.TRUNCATE_EXISTING);
+        Files.writeString(Paths.get("/home/tgj/t/tmpRecord.txt"), tmpRecord.toString(),
+                StandardOpenOption.TRUNCATE_EXISTING);
+        Files.writeString(Paths.get("/home/tgj/t/tmpRecordRun.txt"), tmpRecordRun.toString(),
+                StandardOpenOption.TRUNCATE_EXISTING);
+        Files.writeString(Paths.get("/home/tgj/t/tmpRecordOk.txt"), tmpRecordOk.toString(),
+                StandardOpenOption.TRUNCATE_EXISTING);
+        Files.writeString(Paths.get("/home/tgj/t/tmpRecordFail.txt"), tmpRecordFail.toString(),
+                StandardOpenOption.TRUNCATE_EXISTING);
+        System.out.println(total.size());
     }
 
     @Test
@@ -435,7 +642,8 @@ public class ShareTests {
         String url = "https://hq.kaipanla.com/w1/api/index.php";
         int size = 4000;
         int index = 0;
-        HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(
+        HttpClient httpClient = HttpClient.newBuilder().executor(Executors.newFixedThreadPool(1)).build();
+        HttpResponse<String> httpResponse = httpClient.send(
                 HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "application/x-www-form-urlencoded")
                         .POST(BodyPublishers.ofString("Index=" + index
                                 + "&Order=1&PhoneOSNew=2&Type=1&ZSType=7&a=RealRankingInfo&apiv=w21&c=ZhiShuRanking&st="
@@ -451,7 +659,7 @@ public class ShareTests {
         List<String[]> records = new ArrayList<>();
         for (String stockId : ids) {
             String id = stockId;
-            httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
+            httpResponse = httpClient.send(HttpRequest.newBuilder(URI.create(url))
                     .header("Content-Type", "application/x-www-form-urlencoded")
                     .POST(BodyPublishers.ofString("Index=" + index + "&Order=1&PhoneOSNew=2&PlateID=" + id
                             + "&Token=b1c0216d069ff3c40e17ef97ee38dbf3&Type=6&UserID=778861&a=ZhiShuStockList_W8&apiv=w21&c=ZhiShuRanking&old=1&st="
@@ -489,7 +697,7 @@ public class ShareTests {
         Set<String> stockIds = new HashSet<>();
         for (String[] stockId : collect) {
             String id = stockId[0];
-            httpResponse = HttpClient.newHttpClient().send(
+            httpResponse = httpClient.send(
                     HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "application/x-www-form-urlencoded")
                             .POST(BodyPublishers.ofString(
                                     "PhoneOSNew=2&StockID=" + id + "&a=GetZhangTingGene&apiv=w21&c=StockL2Data",
@@ -555,12 +763,13 @@ public class ShareTests {
         List<String> readAllLines = Files
                 .readAllLines(Paths.get(ShareTests.class.getResource("shareStockId.txt").toURI()));
         List<JsonArray> lists = new LinkedList<JsonArray>();
+        HttpClient httpClient = HttpClient.newBuilder().executor(Executors.newFixedThreadPool(1)).build();
         for (String id : readAllLines) {
             if (id.trim().equals("")) {
                 continue;
             }
             String url = "https://hq.kaipanla.com/w1/api/index.php";
-            HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
+            HttpResponse<String> httpResponse = httpClient.send(HttpRequest.newBuilder(URI.create(url))
                     .header("Content-Type", "application/x-www-form-urlencoded")
                     .POST(BodyPublishers.ofString("PhoneOSNew=2&StockID=" + id.trim()
                             + "&Token=1c90c577bbf1c9abd83f4ff1295f37b8&UserID=778861&a=GetStockBid&apiv=w21&c=StockL2Data",
@@ -779,6 +988,7 @@ public class ShareTests {
         StringBuffer sb1 = new StringBuffer();
         CountDownLatch countDownLatch = new CountDownLatch(readAllLines.size());
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() << 1);
+        HttpClient httpClient = HttpClient.newBuilder().executor(Executors.newFixedThreadPool(1)).build();
         for (String str : readAllLines) {
             if ("".equals(str.trim())) {
                 countDownLatch.countDown();
@@ -792,7 +1002,7 @@ public class ShareTests {
                         + market + "&stockCode=" + code + "&period=TWENTY";
                 HttpResponse<String> httpResponse;
                 try {
-                    httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url)).build(),
+                    httpResponse = httpClient.send(HttpRequest.newBuilder(URI.create(url)).build(),
                             HttpResponse.BodyHandlers.ofString());
                     String result = httpResponse.body();
                     if (!result.contains(":2000")) {
