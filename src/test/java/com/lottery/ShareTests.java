@@ -412,9 +412,9 @@ public class ShareTests {
     @Test
     public void getOneShareDayK() throws IOException, InterruptedException {
         String url = "https://his.kaipanla.com/w1/api/index.php";
-        int size = 10000;
+        int size = 1;
         int index = 0;
-        String stockId = "000970";
+        String stockId = "002982";
         HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .POST(BodyPublishers.ofString("Index=" + index + "&PhoneOSNew=2&StockID=" + stockId
@@ -422,7 +422,7 @@ public class ShareTests {
                         + size, StandardCharsets.UTF_8))
                 .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         System.out.println(
-                JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("y").getAsJsonArray().size());
+                JsonParser.parseString(httpResponse.body()).getAsJsonObject());
     }
 
     @Test
@@ -440,6 +440,7 @@ public class ShareTests {
         double all = 0;
         double tall = 0;
         double fdownAll = 0;
+        double updonwup = 0;
         Set<String> total = new HashSet<>(4000);
         int times = 4;
         DecimalFormat format = new DecimalFormat("0.00");
@@ -490,12 +491,15 @@ public class ShareTests {
                 }
                 if (hight != low) {
                     total.add(stockId);
-                    if (close > preClose) {
+                    if (close >= preClose) {
                         List<String> list = tmpRecord.get(stockId);
                         if (Objects.isNull(list)) {
                             list = new ArrayList<>();
                             list.add((j + 1) + ":" + format.format((hight - low) / low * 100));
                             tmpRecord.put(stockId, list);
+                            if (up) {
+                                updonwup++;
+                            }
                         } else {
                             list.add((j + 1) + ":" + format.format((close - preClose) / preClose * 100));
                         }
@@ -553,7 +557,8 @@ public class ShareTests {
                 tsize++;
             }
         }
-        System.out.println(total.size() + ", ok second:" + format.format(tsize / tmpRecord.size() * 100));
+        System.out.println(total.size() + ", ok second:" + format.format(tsize / tmpRecord.size() * 100)
+                + ", up down up:" + format.format(updonwup / tmpRecord.size() * 100));
         System.out.println("fup:" + fup + ", fdown:" + fdown + ", all:" + all + ", data:" + tall);
         System.out.println("%fup:" + format.format(fup / all * 100) + ", %fdown:" + format.format(fdown / all * 100)
                 + ", %fdown:" + format.format(fdown / all * 100) + ", %fdownFail:"
