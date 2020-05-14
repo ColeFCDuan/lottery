@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -389,15 +390,9 @@ public class ShareTests {
         String url = "https://his.kaipanla.com/w1/api/index.php";
         int size = 10000;
         int index = 0;
-        int times = 4;
-        List<String> readAllLines = Files.readAllLines(Paths.get(ShareTests.class.getResource("share.txt").toURI()));
-        Map<String, List<String>> tmpRecord = new HashMap<>(2000);
-        Map<String, String> tmpRecordFail = new HashMap<>(2000);
-        Map<String, String> tmpRecordRun = new HashMap<>(2000);
-        Map<String, String> recordFail = new HashMap<>(4000);
-        Set<String> total = new HashSet<>(4000);
-        DecimalFormat format = new DecimalFormat("0.00");
         HttpClient httpClient = HttpClient.newBuilder().executor(Executors.newFixedThreadPool(1)).build();
+        List<String> readAllLines = Files.readAllLines(Paths.get(ShareTests.class.getResource("share.txt").toURI()));
+//保存数据到文件
         for (int i = 0; i < readAllLines.size(); i++) {
             System.out.println("pregress... " + i);
             String stockId = readAllLines.get(i).strip();
@@ -409,83 +404,9 @@ public class ShareTests {
                     .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             JsonArray jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("y")
                     .getAsJsonArray();
-            double preClose = 0;
-            int limitup = 0;
-            for (int j = 0; j < jsonArray.size(); j++) {
-                JsonArray item = jsonArray.get(j).getAsJsonArray();
-                double open = item.get(0).getAsDouble();
-                if (preClose == 0) {
-                    preClose = open;
-                }
-                double close = item.get(1).getAsDouble();
-                double hight = item.get(2).getAsDouble();
-                double low = item.get(3).getAsDouble();
-                boolean up = (open == close && close == hight && hight == low) || (close - preClose) / preClose > 0.097;
-                if (up) {
-                    limitup++;
-                } else if (limitup <= times) {
-                    recordFail.put(stockId, j + ":" + format.format((close - preClose) / preClose * 100));
-                    break;
-                }
-                if (hight != low) {
-                    total.add(stockId);
-                    if (close > preClose) {
-                        List<String> list = tmpRecord.get(stockId);
-                        if (Objects.isNull(list)) {
-                            list = new ArrayList<>();
-                            tmpRecord.put(stockId, list);
-                        }
-                        list.add(format.format((hight - low) / low * 100));
-                    } else {
-                        List<String> list = tmpRecord.get(stockId);
-                        if (Objects.isNull(list)) {
-                            for (int k = 1; k <= 3 && i + k < jsonArray.size(); k++) {
-                                item = jsonArray.get(i + k).getAsJsonArray();
-                                double thight = item.get(2).getAsDouble();
-                                if (thight > (hight + low) / 2) {
-                                    tmpRecordRun.put(stockId,
-                                            "第" + (k + 1) + "hight:" + hight + " nowhight:" + hight + " nowlow:" + low);
-                                }
-                            }
-                        } else {
-                            tmpRecordFail.put(stockId, format.format(
-                                    (jsonArray.get(i + 1).getAsJsonArray().get(0).getAsDouble() - (hight - low) / 2)
-                                            / close));
-                        }
-                        break;
-                    }
-                } else if (!up) {
-                    System.out.println("------------------------");
-                }
-            }
+            Files.writeString(Paths.get("/home/tgj/t/shareDayK.txt"), stockId + "\t" + jsonArray.toString() + "\r\n",
+                    StandardOpenOption.APPEND);
         }
-//保存数据到文件
-//        for (int i = 0; i < readAllLines.size(); i++) {
-//            System.out.println("pregress... " + i);
-//            String stockId = readAllLines.get(i).strip();
-//            HttpResponse<String> httpResponse = httpClient.send(HttpRequest.newBuilder(URI.create(url))
-//                    .header("Content-Type", "application/x-www-form-urlencoded")
-//                    .POST(BodyPublishers.ofString("Index=" + index + "&PhoneOSNew=2&StockID=" + stockId
-//                            + "&Token=112c9d20dd5ce76ec3df4ae26103cdf3&Type=d&UserID=778861&a=GetKLineDay_W14&apiv=w21&c=StockLineData&st="
-//                            + size, StandardCharsets.UTF_8))
-//                    .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-//            JsonArray jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("y")
-//                    .getAsJsonArray();
-//            Files.writeString(Paths.get("/home/tgj/t/shareDayK.txt"), stockId + "\t" + jsonArray.toString() + "\r\n", StandardOpenOption.APPEND);
-//        }
-        System.out.println(recordFail);
-        System.out.println(tmpRecord);
-        System.out.println(tmpRecordRun);
-        System.out.println(tmpRecordFail);
-        System.out.println(total.size());
-//        String stockId = "300719";
-//        HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
-//                .header("Content-Type", "application/x-www-form-urlencoded")
-//                .POST(BodyPublishers.ofString("Index=" + index + "&PhoneOSNew=2&StockID=" + stockId
-//                        + "&Token=112c9d20dd5ce76ec3df4ae26103cdf3&Type=d&UserID=778861&a=GetKLineDay_W14&apiv=w21&c=StockLineData&st="
-//                        + size, StandardCharsets.UTF_8))
-//                .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-//        System.out.println(httpResponse.body().strip());
     }
 
     @Test
@@ -513,11 +434,16 @@ public class ShareTests {
         Map<String, String> tmpRecordFail = new HashMap<>(2000);
         Map<String, String> tmpRecordRun = new HashMap<>(2000);
         Map<String, String> recordFail = new HashMap<>(4000);
+        int fup = 0;
+        int fdown = 0;
+        int fdownFail = 0;
+        double all = 0;
+        double tall = 0;
+        double fdownAll = 0;
         Set<String> total = new HashSet<>(4000);
         int times = 4;
         DecimalFormat format = new DecimalFormat("0.00");
         for (int i = 0; i < readAllLines.size(); i++) {
-            System.out.println("pregress... " + i);
             String[] split = readAllLines.get(i).split("\t");
             String stockId = split[0];
             JsonArray jsonArray = JsonParser.parseString(split[1]).getAsJsonArray();
@@ -529,17 +455,37 @@ public class ShareTests {
                 if (open < 0) {
                     break;
                 }
-                if (preClose == 0) {
-                    preClose = open;
-                }
                 double close = item.get(1).getAsDouble();
                 double hight = item.get(2).getAsDouble();
                 double low = item.get(3).getAsDouble();
+                if (j == 0) {
+                    preClose = open;
+                    if (jsonArray.size() > 1) {
+                        tall++;
+                    }
+                    if (jsonArray.size() > 1 && hight > low && close >= open) {
+                        all++;
+                        JsonArray nitem = jsonArray.get(j + 1).getAsJsonArray();
+                        double nopen = nitem.get(0).getAsDouble();
+                        double nclose = nitem.get(1).getAsDouble();
+                        double nhight = nitem.get(2).getAsDouble();
+                        double nlow = nitem.get(3).getAsDouble();
+                        if ((nopen + nclose) / 2 >= preClose) {
+                            fup++;
+                        } else {
+                            fdownAll += (close - open) / open * 100;
+                            fdown++;
+                        }
+                        if ((nopen - preClose) / preClose < -0.097) {
+                            fdownFail++;
+                        }
+                    }
+                }
                 boolean up = (open == close && close == hight && hight == low) || (close - preClose) / preClose > 0.097;
                 if (up) {
                     limitup++;
                 } else if (limitup <= times) {
-                    recordFail.put(stockId, j + ":" + format.format((close - preClose) / preClose * 100));
+                    recordFail.put(stockId, (j + 1) + ":" + format.format((close - preClose) / preClose * 100));
                     break;
                 }
                 if (hight != low) {
@@ -548,10 +494,10 @@ public class ShareTests {
                         List<String> list = tmpRecord.get(stockId);
                         if (Objects.isNull(list)) {
                             list = new ArrayList<>();
-                            list.add(format.format((hight - low) / low * 100));
+                            list.add((j + 1) + ":" + format.format((hight - low) / low * 100));
                             tmpRecord.put(stockId, list);
                         } else {
-                            list.add(format.format((close - preClose) / preClose * 100));
+                            list.add((j + 1) + ":" + format.format((close - preClose) / preClose * 100));
                         }
                     } else {
                         List<String> list = tmpRecord.get(stockId);
@@ -580,15 +526,15 @@ public class ShareTests {
                             }
                         } else {
                             // 平均
-                            list.add(format.format(((hight + low) / 2 / preClose * 100)));
+                            list.add((j + 1) + ":" + format.format((((hight + low) / 2 - preClose) / preClose * 100)));
                             tmpRecordOk.put(stockId, list.stream().collect(Collectors.joining(",")));
                         }
                         break;
                     }
-                    preClose = close;
                 } else if (!up) {
                     System.out.println("------------------------");
                 }
+                preClose = close;
             }
         }
         Files.writeString(Paths.get("/home/tgj/t/recordFail.txt"), recordFail.toString(),
@@ -601,7 +547,17 @@ public class ShareTests {
                 StandardOpenOption.TRUNCATE_EXISTING);
         Files.writeString(Paths.get("/home/tgj/t/tmpRecordFail.txt"), tmpRecordFail.toString(),
                 StandardOpenOption.TRUNCATE_EXISTING);
-        System.out.println(total.size());
+        double tsize = 0;
+        for (Entry<String, List<String>> en : tmpRecord.entrySet()) {
+            if (en.getValue().size() > 1) {
+                tsize++;
+            }
+        }
+        System.out.println(total.size() + ", ok second:" + format.format(tsize / tmpRecord.size() * 100));
+        System.out.println("fup:" + fup + ", fdown:" + fdown + ", all:" + all + ", data:" + tall);
+        System.out.println("%fup:" + format.format(fup / all * 100) + ", %fdown:" + format.format(fdown / all * 100)
+                + ", %fdown:" + format.format(fdown / all * 100) + ", %fdownFail:"
+                + format.format(fdownFail / all * 100) + ", %fdownRange:" + format.format(fdownAll / fdown));
     }
 
     @Test
