@@ -790,7 +790,7 @@ public class ShareTests {
     @Test
     public void getEntrust() throws IOException, InterruptedException, URISyntaxException {
         // PhoneOSNew=2&StockID=300576&Token=b1c0216d069ff3c40e17ef97ee38dbf3&UserID=778861&a=GetStockBid&apiv=w21&c=StockL2Data
-        String stockId = "002156";
+        String stockId = "002256";
         int index = 0;
         int size = 6000;
         String url = "https://hq.kaipanla.com/w1/api/index.php";
