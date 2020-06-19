@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -51,7 +52,7 @@ public class ShareTests {
         url = "https://hq.kaipanla.com/w1/api/index.php";
         int index = 6000;
         int size = 6000;
-        String stockId = "002156";
+        String stockId = "603439";
         HttpClient httpClient = HttpClient.newBuilder().executor(Executors.newFixedThreadPool(1)).build();
 //        while (true) {
         HttpResponse<String> httpResponse = httpClient.send(
@@ -219,7 +220,7 @@ public class ShareTests {
     public void myShareTest() throws IOException, InterruptedException {
         String url = "http://hq.sinajs.cn/list=sh600678,sh600068"
                 + ",sh600989,sz300051,sz002277,sh603366,sz000716,sz300002,sh600853,sz002310,sz002154,sz002505,sz002305,sh600159";
-        url = "http://hq.sinajs.cn/list=sz002982,sh603256";
+        url = "http://hq.sinajs.cn/list=sz000063,sh600712";
         DecimalFormat format = new DecimalFormat("0.00");
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
         HttpClient httpClient = HttpClient.newBuilder().executor(Executors.newFixedThreadPool(1)).build();
@@ -364,9 +365,9 @@ public class ShareTests {
     @Test
     public void getTopPlate() throws IOException, InterruptedException {
         String url = "https://hq.kaipanla.com/w1/api/index.php";
-        int size = 3;
+        int size = 4;
         int index = 0;
-        String date = "2020-05-07";
+        String date = "2020-06-19";
         HttpClient httpClient = HttpClient.newBuilder().executor(Executors.newFixedThreadPool(1)).build();
         while (true) {
             HttpResponse<String> httpResponse = httpClient.send(HttpRequest.newBuilder(URI.create(url))
@@ -381,6 +382,40 @@ public class ShareTests {
             jsonArray.forEach(System.out::println);
             System.out.println("---------------------");
             Thread.sleep(3000);
+        }
+    }
+
+    @Test
+    public void conceptionPoint() throws IOException, InterruptedException {
+        String url = "https://hq.kaipanla.com/w1/api/index.php";
+        HttpClient httpClient = HttpClient.newBuilder().executor(Executors.newFixedThreadPool(1)).build();
+        int size = 1;
+        int index = 0;
+        Set<String> records = new HashSet<>();
+        while (true) {
+            HttpResponse<String> httpResponse = httpClient.send(
+                    HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "application/x-www-form-urlencoded")
+                            .POST(BodyPublishers
+                                    .ofString("PhoneOSNew=2&a=ZhiBoContent&apiv=w21&c=ConceptionPoint&index=" + index
+                                            + "&st=" + size, StandardCharsets.UTF_8))
+                            .build(),
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            JsonObject jsonObject = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("List")
+                    .getAsJsonArray().get(0).getAsJsonObject();
+            String str = jsonObject.get("Comment").getAsString();
+            if (records.contains(str)) {
+            } else {
+                records.add(str);
+                System.out.println(
+                        DateFormatUtils.format(jsonObject.get("Time").getAsLong() * 1000, "yyyy-MM-dd HH:mm:SS") + "\t"
+                                + str + ":");
+                JsonArray asJsonArray = jsonObject.get("Stock").getAsJsonArray();
+                for (JsonElement jsonElement : asJsonArray) {
+                    JsonArray ja = jsonElement.getAsJsonArray();
+                    System.out.println(ja.get(0) + "\t" + ja.get(1) + "\t" + ja.get(2));
+                }
+            }
+            Thread.sleep(1000);
         }
     }
 
@@ -421,8 +456,7 @@ public class ShareTests {
                         + "&Token=112c9d20dd5ce76ec3df4ae26103cdf3&Type=d&UserID=778861&a=GetKLineDay_W14&apiv=w21&c=StockLineData&st="
                         + size, StandardCharsets.UTF_8))
                 .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-        System.out.println(
-                JsonParser.parseString(httpResponse.body()).getAsJsonObject());
+        System.out.println(JsonParser.parseString(httpResponse.body()).getAsJsonObject());
     }
 
     @Test
@@ -568,8 +602,8 @@ public class ShareTests {
     @Test
     public void getOneShare() throws IOException, InterruptedException {
         String url = "https://his.kaipanla.com/w1/api/index.php";
-        String date = "2020-05-08";
-        int size = 3;
+        String date = "2020-05-11";
+        int size = 3807;
         int index = 0;
         HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
                 .header("Content-Type", "application/x-www-form-urlencoded")
@@ -682,7 +716,7 @@ public class ShareTests {
         String url = "https://hq.kaipanla.com/w1/api/index.php";
         int size = 4000;
         int index = 0;
-        String date = "2020-04-27";
+        String date = "2020-05-15";
         HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .POST(BodyPublishers.ofString("Date=" + date
@@ -713,6 +747,33 @@ public class ShareTests {
 //        double tprice;
 //        double exchange;
 //    }
+
+    @Test
+    public void biddingSummary() throws IOException, InterruptedException {
+        String url = "https://hq.kaipanla.com/w1/api/index.php?apiv=w21&PhoneOSNew=2";
+        HttpClient httpClient = HttpClient.newBuilder().executor(Executors.newFixedThreadPool(1)).build();
+        HttpResponse<String> httpResponse = httpClient.send(HttpRequest.newBuilder(URI.create(url))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(BodyPublishers.ofString(
+                        "c=StockBidYiDong&a=GetBidYiDongW10&View=1&UserID=778861&Token=112c9d20dd5ce76ec3df4ae26103cdf3",
+                        StandardCharsets.UTF_8))
+                .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        // {"StockID":"002425","prod_name":"\u51ef\u6492\u6587\u5316","ZFJJ":5.15,"TurJJ":128586652,"LNB":75.95,"ZTWM":52433875,"ZF":9.98,"Plate":"\u6e38\u620f\u3001\u6587\u5316\u4f20\u5a92"}
+        // stockId, name, 竞价涨幅, 竞价成交量, 竞价占昨量, 涨停委买量, 涨停, 板块
+        JsonArray jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("ErBanList")
+                .getAsJsonArray();
+        System.out.printf("%-20s\t%-20s\t%-20s\t%-16s\t%-14s\t%-12s\t%s", "StockID", "name", "竞价涨幅", "竞价成交量", "竞价占昨量",
+                "涨停委买量", "板块");
+        System.out.println();
+        for (JsonElement jsonElement : jsonArray) {
+            JsonObject jsonObject = jsonElement.getAsJsonObject();
+            System.out.printf("%-20s\t%-20s\t%-20s\t%-20s\t%-20s\t%-20s\t%-20s", jsonObject.get("StockID"),
+                    jsonObject.get("prod_name"), jsonObject.get("ZFJJ"),
+                    jsonObject.get("TurJJ").getAsLong() / 100_000_00, jsonObject.get("LNB"),
+                    jsonObject.get("ZTWM").getAsLong() / 1_000_000, jsonObject.get("Plate"));
+            System.out.println();
+        }
+    }
 
     @Test
     public void biddingPrice() throws IOException, InterruptedException, URISyntaxException {
@@ -790,7 +851,7 @@ public class ShareTests {
     @Test
     public void getEntrust() throws IOException, InterruptedException, URISyntaxException {
         // PhoneOSNew=2&StockID=300576&Token=b1c0216d069ff3c40e17ef97ee38dbf3&UserID=778861&a=GetStockBid&apiv=w21&c=StockL2Data
-        String stockId = "002256";
+        String stockId = "603439";
         int index = 0;
         int size = 6000;
         String url = "https://hq.kaipanla.com/w1/api/index.php";
@@ -878,7 +939,7 @@ public class ShareTests {
     public void handicap() throws IOException, InterruptedException, ParseException {
         // DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index=0&PhoneOSNew=2&Time=2020-04-02&Token=b1c0216d069ff3c40e17ef97ee38dbf3&Type=1&UserID=778861&a=GetStockList&apiv=w21&c=LongHuBang&st=300
         String url = "https://hq.kaipanla.com/w1/api/index.php";
-        String stockID = "300719";
+        String stockID = "603439";
         String token = "1c90c577bbf1c9abd83f4ff1295f37b8";
         HttpResponse<String> httpResponse = HttpClient.newHttpClient().send(
                 HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "application/x-www-form-urlencoded")
@@ -921,7 +982,7 @@ public class ShareTests {
     public void tradeDetail() throws IOException, InterruptedException {
         // DeviceID=dd81c83ba6afa08ecabb858113498d8b58c102bb&Index=4200&PhoneOSNew=3193&StockID=002426&Type=2&UserID=778861&a=GetStockFenBi2&apiv=w21&c=StockL2Data&st=10
         String url = "https://hq.kaipanla.com/w1/api/index.php";
-        String id = "002156";
+        String id = "603439";
         int index = 6000;
         int size = 6000;
         HttpResponse<String> httpResponse = HttpClient
@@ -934,8 +995,9 @@ public class ShareTests {
                                         StandardCharsets.UTF_8))
                                 .build(),
                         HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        System.out.println(httpResponse.body());
         JsonObject jsonObject = JsonParser.parseString(httpResponse.body()).getAsJsonObject();
-        System.out.println(jsonObject.get("fb").getAsJsonArray());
+//        System.out.println(jsonObject.get("fb").getAsJsonArray());
     }
 
     @Ignore
