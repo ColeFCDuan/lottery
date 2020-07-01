@@ -215,56 +215,6 @@ public class ShareTests {
         System.out.println(httpResponse.body().split(",").length);
     }
 
-//    @Ignore
-    @Test
-    public void myShareTest() throws IOException, InterruptedException {
-        String url = "http://hq.sinajs.cn/list=sh600678,sh600068"
-                + ",sh600989,sz300051,sz002277,sh603366,sz000716,sz300002,sh600853,sz002310,sz002154,sz002505,sz002305,sh600159";
-        url = "http://hq.sinajs.cn/list=sz000063,sh600712";
-        DecimalFormat format = new DecimalFormat("0.00");
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
-        HttpClient httpClient = HttpClient.newBuilder().executor(Executors.newFixedThreadPool(1)).build();
-        while (true) {
-            HttpResponse<String> httpResponse = httpClient.send(
-                    HttpRequest.newBuilder(URI.create("http://hq.sinajs.cn/list=sh000001")).build(),
-                    HttpResponse.BodyHandlers.ofString());
-            String str = httpResponse.body();
-            // var
-            // hq_str_sh000001="上证指数,2819.9914,2815.4947,2779.3318,2821.7450,2779.3318,0,0,77015985,74140680689,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2020-04-28,09:55:38,00,";
-            // 名称，开，昨收，当前，高
-            String[] result = str.split(",");
-
-            System.out.println(
-                    result[0].split("\"")[1] + "\t" + Math.ceil(Float.valueOf(result[3]) - Float.valueOf(result[2])));
-
-            httpResponse = httpClient.send(HttpRequest.newBuilder(URI.create(url)).build(),
-                    HttpResponse.BodyHandlers.ofString());
-            str = httpResponse.body();
-            result = str.split("\n");
-            System.out.println(simpleDateFormat.format(new Date()));
-//			System.out.println(Stream.of(result[0].split(",")).collect(Collectors.joining("\t")));
-            for (int i = 0; i < result.length; i++) {
-                String[] tmp = result[i].split(",");
-//                System.out.println(Arrays.toString(tmp));
-                // // 买
-//                System.out.println(tmp[20] + "--" + tmp[21]);
-                // // 卖
-//                System.out.println(tmp[10] + "--" + tmp[11]);
-                System.out.print(tmp[0].split("\"")[1] + "\t" + tmp[0].split("=\"")[0].split("_")[2] + "\t" + tmp[3]
-                        + "\t" + format.format((Float.valueOf(tmp[3]) / Float.valueOf(tmp[2]) - 1) * 100) + "%\t"
-                        + ((Float.valueOf(tmp[10]) == 0) ? (int) Math.floor(Float.valueOf(tmp[20]) / 100)
-                                : (int) Math.floor(Float.valueOf(tmp[10]) / 100))
-                        + "\t" + tmp[11]);
-                System.out.print("\t\t");
-                if ((i & 1) == 1) {
-                    System.out.println();
-                }
-            }
-            System.out.println();
-            TimeUnit.MILLISECONDS.sleep(1992);
-        }
-    }
-
     @Ignore
     @Test
     public void createTest() throws IOException {
@@ -362,12 +312,62 @@ public class ShareTests {
         jsonArray.forEach(System.out::println);
     }
 
+//  @Ignore
+    @Test
+    public void myShareTest() throws IOException, InterruptedException {
+        String url = "http://hq.sinajs.cn/list=sh600678,sh600068"
+                + ",sh600989,sz300051,sz002277,sh603366,sz000716,sz300002,sh600853,sz002310,sz002154,sz002505,sz002305,sh600159";
+        url = "http://hq.sinajs.cn/list=sh600529,sz000858,sz000661,sh600436,sz000799,sz002425";
+        DecimalFormat format = new DecimalFormat("0.00");
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
+        HttpClient httpClient = HttpClient.newBuilder().executor(Executors.newFixedThreadPool(1)).build();
+        while (true) {
+            HttpResponse<String> httpResponse = httpClient.send(
+                    HttpRequest.newBuilder(URI.create("http://hq.sinajs.cn/list=sh000001")).build(),
+                    HttpResponse.BodyHandlers.ofString());
+            String str = httpResponse.body();
+            // var
+            // hq_str_sh000001="上证指数,2819.9914,2815.4947,2779.3318,2821.7450,2779.3318,0,0,77015985,74140680689,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2020-04-28,09:55:38,00,";
+            // 名称，开，昨收，当前，高
+            String[] result = str.split(",");
+
+            System.out.println(
+                    result[0].split("\"")[1] + "\t" + Math.ceil(Float.valueOf(result[3]) - Float.valueOf(result[2])));
+
+            httpResponse = httpClient.send(HttpRequest.newBuilder(URI.create(url)).build(),
+                    HttpResponse.BodyHandlers.ofString());
+            str = httpResponse.body();
+            result = str.split("\n");
+            System.out.println(simpleDateFormat.format(new Date()));
+//        System.out.println(Stream.of(result[0].split(",")).collect(Collectors.joining("\t")));
+            for (int i = 0; i < result.length; i++) {
+                String[] tmp = result[i].split(",");
+//              System.out.println(Arrays.toString(tmp));
+                // // 买
+//              System.out.println(tmp[20] + "--" + tmp[21]);
+                // // 卖
+//              System.out.println(tmp[10] + "--" + tmp[11]);
+                System.out.print(tmp[0].split("\"")[1] + "\t" + tmp[0].split("=\"")[0].split("_")[2] + "\t" + tmp[3]
+                        + "\t" + format.format((Float.valueOf(tmp[3]) / Float.valueOf(tmp[2]) - 1) * 100) + "%\t"
+                        + ((Float.valueOf(tmp[10]) == 0) ? (int) Math.floor(Float.valueOf(tmp[20]) / 100)
+                                : (int) Math.floor(Float.valueOf(tmp[10]) / 100))
+                        + "\t" + tmp[11]);
+                System.out.print("\t\t");
+                if ((i & 1) == 1) {
+                    System.out.println();
+                }
+            }
+            System.out.println();
+            TimeUnit.MILLISECONDS.sleep(1992);
+        }
+    }
+
     @Test
     public void getTopPlate() throws IOException, InterruptedException {
         String url = "https://hq.kaipanla.com/w1/api/index.php";
         int size = 4;
         int index = 0;
-        String date = "2020-06-19";
+        String date = "2020-06-30";
         HttpClient httpClient = HttpClient.newBuilder().executor(Executors.newFixedThreadPool(1)).build();
         while (true) {
             HttpResponse<String> httpResponse = httpClient.send(HttpRequest.newBuilder(URI.create(url))
@@ -376,10 +376,36 @@ public class ShareTests {
                             + "&Order=1&PhoneOSNew=2&Type=1&ZSType=7&a=RealRankingInfo&apiv=w21&c=ZhiShuRanking&st="
                             + size, StandardCharsets.UTF_8))
                     .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            System.out.println(httpResponse.body());
             JsonArray jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("list")
                     .getAsJsonArray();
             jsonArray.forEach(System.out::println);
+            System.out.println("---------------------");
+            Thread.sleep(3000);
+        }
+    }
+
+    @Test
+    public void watchPlate() throws IOException, InterruptedException {
+        String url = "https://hq.kaipanla.com/w1/api/index.php";
+        int index = 0;
+        int size = 1;
+        String token = "a206e3ce577623e184c23bbc14bf54fe";
+        String stockIds = "801035,801402";
+        while (true) {
+            HttpClient httpClient = HttpClient.newBuilder().executor(Executors.newFixedThreadPool(1)).build();
+            HttpResponse<String> httpResponse = httpClient.send(
+                    HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "application/x-www-form-urlencoded")
+                            .POST(BodyPublishers.ofString("PhoneOSNew=2&StockIDList=" + stockIds + "&Token=" + token
+                                    + "&UserID=778861&VerSion=4.6.0.0&a=RefreshStockList_w8&apiv=w22&c=UserSelectStock",
+                                    StandardCharsets.UTF_8))
+                            .build(),
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            JsonArray jsonArray = JsonParser.parseString(httpResponse.body()).getAsJsonObject().get("List")
+                    .getAsJsonArray();
+            for (JsonElement jsonElement : jsonArray) {
+                JsonArray tmp = jsonElement.getAsJsonArray();
+                System.out.printf("%-20s\t%-20s\t%-20s\t%-20s\t\n", tmp.get(1), tmp.get(5), tmp.get(6), tmp.get(9));
+            }
             System.out.println("---------------------");
             Thread.sleep(3000);
         }
